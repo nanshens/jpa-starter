@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import ns.boot.jpa.starter.repository.FindRepo;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+
 /**
  * @author ns
  */
@@ -21,8 +23,8 @@ public class FindService {
 	 * 4. format result json
 	 *
 	 */
-	public void find(JSONObject jso, String baseUrl) {
-		findRepo.find(jso, baseUrl);
+	public void find(JSONObject jso, String baseUrl, EntityManager entityManager) {
+		findRepo.find(jso, baseUrl, entityManager);
 	}
 
 }

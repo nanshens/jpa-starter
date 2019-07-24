@@ -12,9 +12,11 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -23,11 +25,9 @@ import java.util.Set;
 
 @Repository
 public class FindRepo {
-	@Autowired
-	private EntityManager entityManager;
 
 	@SneakyThrows
-	public void find(JSONObject jso, String url) {
+	public void find(JSONObject jso, String url, EntityManager entityManager) {
 
 		List<Class<?>> targetCls = new ArrayList<>();
 
@@ -42,16 +42,16 @@ public class FindRepo {
 				}
 			});
 		}
+		String s = ((Map)jso.get("Customer")).get("code").toString();
 
-		System.out.println(targetCls);
-		System.out.println(entityManager == null);
-//
-//		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-//		CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-//
-//
-//
-//		Root<?> root1 = cq.from(targetCls.get(0));
+		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+		CriteriaQuery<?> cq = cb.createQuery(targetCls.get(0));
+		Root<?> root = cq.from(targetCls.get(0));
+		cq.where(cb.equal(root.get("code"), s));
+		List<?> result = entityManager.createQuery(cq).getResultList();
+
+		System.out.println(result);
+
 //
 //
 //		Root<Object> root = cq.from(Object.class);
