@@ -34,47 +34,24 @@ public  class QueryFilter {
         return new QueryFilter(name, value, MatchType.EQ);
     }
 
-    public static QueryFilter eq(String name){
-        return new QueryFilter(name, null, MatchType.EQ);
-    }
-
     public static QueryFilter ne(String name, Object value){
         return new QueryFilter(name, value, MatchType.NE);
-    }
-
-    public static QueryFilter ne(String name){
-        return new QueryFilter(name, null, MatchType.NE);
     }
 
     public static QueryFilter gt(String name, Object value){
         return new QueryFilter(name, value, MatchType.GT);
     }
 
-    public static QueryFilter gt(String name){
-        return new QueryFilter(name, null, MatchType.GT);
-    }
-
     public static QueryFilter lt(String name, Object value){
         return new QueryFilter(name, value, MatchType.LT);
-    }
-
-    public static QueryFilter lt(String name){
-        return new QueryFilter(name, null, MatchType.LT);
     }
 
     public static QueryFilter ge(String name, Object value){
         return new QueryFilter(name, value, MatchType.GE);
     }
 
-    public static QueryFilter ge(String name){
-        return new QueryFilter(name, null, MatchType.GE);
-    }
-
     public static QueryFilter le(String name, Object value){
         return new QueryFilter(name, value, MatchType.LE);
-    }
-    public static QueryFilter le(String name){
-        return new QueryFilter(name, null, MatchType.LE);
     }
 
     public static QueryFilter like(String name, String value){
@@ -82,10 +59,6 @@ public  class QueryFilter {
             value = "";
         }
         return new QueryFilter(name, "%"+value+"%", MatchType.LIKE);
-    }
-
-    public static QueryFilter like(String name){
-        return new QueryFilter(name, null, MatchType.LIKE);
     }
 
     public static QueryFilter in(String name, Object... valueList){
@@ -103,10 +76,6 @@ public  class QueryFilter {
             }
         }
         return new QueryFilter(name, values, MatchType.IN);
-    }
-
-    public static QueryFilter in(String name){
-        return new QueryFilter(name, null, MatchType.IN);
     }
 
     public static QueryFilter isNull(String name){
@@ -139,13 +108,5 @@ public  class QueryFilter {
             }
         }
         return new QueryFilter(name, values, MatchType.BETWEEN);
-    }
-
-    public static QueryFilter between(String name){
-        return new QueryFilter(name, null, MatchType.BETWEEN);
-    }
-
-    public static QueryFilter noType(String name, Object value){
-        return new QueryFilter(name, value);
     }
 }

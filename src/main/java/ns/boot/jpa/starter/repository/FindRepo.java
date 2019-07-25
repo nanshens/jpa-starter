@@ -2,6 +2,7 @@ package ns.boot.jpa.starter.repository;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
+import ns.boot.jpa.starter.entity.QueryFilter;
 import org.reflections.Reflections;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,9 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,8 +33,9 @@ public class FindRepo {
 	@SneakyThrows
 	public void find(JSONObject jso, String url, EntityManager entityManager) {
 
-		List<Class<?>> targetCls = new ArrayList<>();
+		Map jsoMap = jso.toJavaObject(Map.class);
 
+		Map<String, Class<?>> targetCls = new HashMap<>();
 
 		Reflections reflections = new Reflections(url);
 		Set<Class<?>> classSet = reflections.getTypesAnnotatedWith(Entity.class);
@@ -38,19 +43,38 @@ public class FindRepo {
 		for (Class<?> aClass : classSet) {
 			jso.forEach((k, v) -> {
 				if (aClass.getSimpleName().equals(k)){
-					targetCls.add(aClass);
+					targetCls.put(k, aClass);
 				}
 			});
 		}
-		String s = ((Map)jso.get("Customer")).get("code").toString();
 
-		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-		CriteriaQuery<?> cq = cb.createQuery(targetCls.get(0));
-		Root<?> root = cq.from(targetCls.get(0));
-		cq.where(cb.equal(root.get("code"), s));
-		List<?> result = entityManager.createQuery(cq).getResultList();
+		Iterator it = jsoMap.keySet().iterator();
 
-		System.out.println(result);
+		while (it.hasNext()) {
+			String entity = it.next().toString();
+			Map fieldMap = ((Map)jsoMap.get(entity));
+			Iterator fields = fieldMap.keySet().iterator();
+
+			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+			CriteriaQuery<?> cq = cb.createQuery(targetCls.get(entity));
+			Root<?> root = cq.from(targetCls.get(entity));
+			Predicate predicate = null;
+
+			while (fields.hasNext()) {
+				String field = fields.next().toString();
+				if (predicate == null) {
+					predicate = cb.equal(root.get(field), fieldMap.get(field));
+				}else {
+					predicate = cb.and(predicate, cb.equal(root.get(field), fieldMap.get(field)));
+				}
+			}
+
+			cq.where(predicate);
+			List<?> result = entityManager.createQuery(cq).getResultList();
+			System.out.println(result);
+		}
+
+
 
 //
 //
