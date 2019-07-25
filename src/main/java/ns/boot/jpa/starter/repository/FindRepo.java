@@ -85,4 +85,16 @@ public class FindRepo {
 //		cq.where(where).groupBy(root.get("status"));
 //		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
+
+	public Predicate getType(String f, Object o, CriteriaBuilder cb, Root<?> root) {
+		if (f.contains("!")) {
+//			not in , not equal, not like , not null
+			return cb.notEqual(root.get(f), o);
+		} else if (f.contains("~")) {
+//			like %aa, aa%, %aaa%, ~~
+			return cb.like(root.get(f), o.toString());
+		} else {
+//			equal > < && in null
+		}
+	}
 }
