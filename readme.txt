@@ -5,7 +5,7 @@ todo:
 1. url config
 2. json parser
 3. jpa entitymanager
-
+4, enums and localdate localtime
 
 example
 
@@ -26,6 +26,7 @@ request json
         "f7": "NOTNULL",
         "f8~": "%21321%",
         "f9~": "%21321",
+        "f9&": "%21321",
 
         ...,
 

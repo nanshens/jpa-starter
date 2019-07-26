@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.EntityManager;
+import java.util.List;
 
 /**
  * @author ns
@@ -21,7 +22,7 @@ public class FindController {
 	@Autowired
 	private EntityManager entityManager;
 	@GetMapping(value = "/find", produces = "application/json")
-	public void find(@RequestBody JSONObject json) {
-		findService.find(json, properties.getBaseUrl(), entityManager);
+	public List find(@RequestBody JSONObject json) {
+		return findService.find(json, properties.getBaseUrl(), entityManager);
 	}
 }

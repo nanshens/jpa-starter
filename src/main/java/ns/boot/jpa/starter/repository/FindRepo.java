@@ -31,8 +31,8 @@ import java.util.Set;
 public class FindRepo {
 
 	@SneakyThrows
-	public void find(JSONObject jso, String url, EntityManager entityManager) {
-
+	public List find(JSONObject jso, String url, EntityManager entityManager) {
+		List result = new ArrayList();
 		Map jsoMap = jso.toJavaObject(Map.class);
 
 		Map<String, Class<?>> targetCls = new HashMap<>();
@@ -56,26 +56,17 @@ public class FindRepo {
 			Iterator fields = fieldMap.keySet().iterator();
 
 			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+//			CriteriaQuery<?> cq = cb.createTupleQuery();
 			CriteriaQuery<?> cq = cb.createQuery(targetCls.get(entity));
 			Root<?> root = cq.from(targetCls.get(entity));
-			Predicate predicate = null;
 
-			while (fields.hasNext()) {
-				String field = fields.next().toString();
-				if (predicate == null) {
-					predicate = cb.equal(root.get(field), fieldMap.get(field));
-				}else {
-					predicate = cb.and(predicate, cb.equal(root.get(field), fieldMap.get(field)));
-				}
-			}
-
-			cq.where(predicate);
-			List<?> result = entityManager.createQuery(cq).getResultList();
-			System.out.println(result);
+//			cq.multiselect(root.get("code"), root.get("name"));
+			cq.where(forFields(fields, fieldMap, cb, root, null));
+			List<?> resultList = entityManager.createQuery(cq).getResultList();
+			System.out.println(resultList);
+			result.add(resultList);
 		}
-
-
-
+		return result;
 //
 //
 //		Root<Object> root = cq.from(Object.class);
@@ -86,15 +77,59 @@ public class FindRepo {
 //		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
 
-	public Predicate getType(String f, Object o, CriteriaBuilder cb, Root<?> root) {
-		if (f.contains("!")) {
-//			not in , not equal, not like , not null
-			return cb.notEqual(root.get(f), o);
+	public Predicate forFields(Iterator fields, Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate) {
+
+		while (fields.hasNext()) {
+			String field = fields.next().toString();
+			Object value = fieldMap.get(field);
+
+			if (value instanceof LinkedHashMap) {
+//				return forFields(((Map) value).keySet().iterator(), (Map) value, cb, root.get("address"), predicate);
+			} else {
+				predicate = predicate == null ?
+						getPredicate(field, fieldMap.get(field), cb, root) :
+						cb.and(predicate, getPredicate(field, fieldMap.get(field), cb, root));
+			}
+		}
+		return predicate;
+	}
+
+
+	public Predicate getPredicate(String f, Object o, CriteriaBuilder cb, Root<?> root) {
+		if (f.contains("&")) {
+			return getPredicate(f.replace("&", ""), o, cb, root);
+		} else if (f.contains("!")) {
+//			not in,not like :not realize
+			String tf = f.replace("!", "");
+			if (o == null) {
+				return cb.isNotNull(root.get(tf));
+			}else {
+				return cb.notEqual(root.get(tf), o);
+			}
 		} else if (f.contains("~")) {
-//			like %aa, aa%, %aaa%, ~~
-			return cb.like(root.get(f), o.toString());
+			String tf = f.replace("~", "");
+			return cb.like(root.get(tf), o.toString());
 		} else {
-//			equal > < && in null
+			if (o instanceof ArrayList) {
+				return root.get(f).in((ArrayList) o);
+			} else {
+				if (o == null) {
+					return cb.isNull(root.get(f));
+				} else {
+					String v = o.toString();
+					if (v.contains("<=")) {
+						return cb.lessThanOrEqualTo(root.get(f), v.replace("<=", ""));
+					} else if (v.contains(">=")) {
+						return cb.greaterThanOrEqualTo(root.get(f), v.replace(">=", ""));
+					} else if (v.contains("<")) {
+						return cb.lessThan(root.get(f), v.replace("<", ""));
+					} else if (v.contains(">")) {
+						return cb.greaterThan(root.get(f), v.replace(">", ""));
+					} else {
+						return cb.equal(root.get(f), o);
+					}
+				}
+			}
 		}
 	}
 }

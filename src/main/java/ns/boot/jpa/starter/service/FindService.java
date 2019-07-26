@@ -5,6 +5,7 @@ import ns.boot.jpa.starter.repository.FindRepo;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import java.util.List;
 
 /**
  * @author ns
@@ -23,8 +24,8 @@ public class FindService {
 	 * 4. format result json
 	 *
 	 */
-	public void find(JSONObject jso, String baseUrl, EntityManager entityManager) {
-		findRepo.find(jso, baseUrl, entityManager);
+	public List find(JSONObject jso, String baseUrl, EntityManager entityManager) {
+		return findRepo.find(jso, baseUrl, entityManager);
 	}
 
 }
