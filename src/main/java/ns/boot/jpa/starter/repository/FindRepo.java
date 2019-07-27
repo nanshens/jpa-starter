@@ -84,7 +84,7 @@ public class FindRepo {
 			Object value = fieldMap.get(field);
 
 			if (value instanceof LinkedHashMap) {
-//				return forFields(((Map) value).keySet().iterator(), (Map) value, cb, root.get("address"), predicate);
+				return forFields(((Map) value).keySet().iterator(), (Map) value, cb, root.get("address"), predicate);
 			} else {
 				predicate = predicate == null ?
 						getPredicate(field, fieldMap.get(field), cb, root) :
