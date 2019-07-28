@@ -3,6 +3,7 @@ package ns.boot.jpa.starter.repository;
 import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
 import ns.boot.jpa.starter.entity.QueryFilter;
+import org.apache.logging.log4j.util.Strings;
 import org.reflections.Reflections;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
@@ -61,7 +63,7 @@ public class FindRepo {
 			Root<?> root = cq.from(targetCls.get(entity));
 
 //			cq.multiselect(root.get("code"), root.get("name"));
-			cq.where(forFields(fields, fieldMap, cb, root, null));
+			cq.where(forFields(fields, fieldMap, cb, root, null, ""));
 			List<?> resultList = entityManager.createQuery(cq).getResultList();
 			System.out.println(resultList);
 			result.add(resultList);
@@ -77,56 +79,59 @@ public class FindRepo {
 //		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
 
-	public Predicate forFields(Iterator fields, Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate) {
+	public Predicate forFields(Iterator fields, Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate, String rootPath) {
 
 		while (fields.hasNext()) {
 			String field = fields.next().toString();
 			Object value = fieldMap.get(field);
 
 			if (value instanceof LinkedHashMap) {
-				return forFields(((Map) value).keySet().iterator(), (Map) value, cb, root.get("address"), predicate);
+				return forFields(((Map) value).keySet().iterator(), (Map) value, cb, root, predicate, field);
 			} else {
 				predicate = predicate == null ?
-						getPredicate(field, fieldMap.get(field), cb, root) :
-						cb.and(predicate, getPredicate(field, fieldMap.get(field), cb, root));
+						getPredicate(field, fieldMap.get(field), cb, root, rootPath) :
+						cb.and(predicate, getPredicate(field, fieldMap.get(field), cb, root, rootPath));
 			}
 		}
 		return predicate;
 	}
 
 
-	public Predicate getPredicate(String f, Object o, CriteriaBuilder cb, Root<?> root) {
+	public Predicate getPredicate(String f, Object o, CriteriaBuilder cb, Root<?> root, String path) {
 		if (f.contains("&")) {
-			return getPredicate(f.replace("&", ""), o, cb, root);
+			return getPredicate(f.replace("&", ""), o, cb, root, path);
 		} else if (f.contains("!")) {
 //			not in,not like :not realize
 			String tf = f.replace("!", "");
+			Path finPath = Strings.isEmpty(path) ? root.get(tf) : root.get(path).get(tf);
 			if (o == null) {
-				return cb.isNotNull(root.get(tf));
+				return cb.isNotNull(finPath);
 			}else {
-				return cb.notEqual(root.get(tf), o);
+				return cb.notEqual(finPath, o);
 			}
 		} else if (f.contains("~")) {
 			String tf = f.replace("~", "");
-			return cb.like(root.get(tf), o.toString());
+			Path finPath = Strings.isEmpty(path) ? root.get(tf) : root.get(path).get(tf);
+			return cb.like(finPath, o.toString());
 		} else {
+			Path finPath = Strings.isEmpty(path) ? root.get(f) : root.get(path).get(f);
 			if (o instanceof ArrayList) {
-				return root.get(f).in((ArrayList) o);
+				return finPath.in((ArrayList) o);
 			} else {
 				if (o == null) {
-					return cb.isNull(root.get(f));
+					return cb.isNull(finPath);
 				} else {
 					String v = o.toString();
 					if (v.contains("<=")) {
-						return cb.lessThanOrEqualTo(root.get(f), v.replace("<=", ""));
+						return cb.lessThanOrEqualTo(finPath, v.replace("<=", ""));
 					} else if (v.contains(">=")) {
-						return cb.greaterThanOrEqualTo(root.get(f), v.replace(">=", ""));
+						return cb.greaterThanOrEqualTo(finPath, v.replace(">=", ""));
 					} else if (v.contains("<")) {
-						return cb.lessThan(root.get(f), v.replace("<", ""));
+						return cb.lessThan(finPath, v.replace("<", ""));
 					} else if (v.contains(">")) {
-						return cb.greaterThan(root.get(f), v.replace(">", ""));
+						return cb.greaterThan(finPath, v.replace(">", ""));
 					} else {
-						return cb.equal(root.get(f), o);
+						return cb.equal(finPath, o);
 					}
 				}
 			}
