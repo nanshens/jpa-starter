@@ -1,8 +1,10 @@
 package ns.boot.jpa.starter.repository;
 
 import com.alibaba.fastjson.JSONObject;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import lombok.SneakyThrows;
 import ns.boot.jpa.starter.entity.QueryFilter;
+import ns.boot.jpa.starter.utils.QueryUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.reflections.Reflections;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 /**
  * @author ns
@@ -96,8 +99,29 @@ public class FindRepo {
 		return predicate;
 	}
 
+	public void method(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate) {
+		Stack<String> fields = new Stack<>();
+		fields.addAll(fieldMap.keySet());
+
+		while (!fields.empty()) {
+			String field = fields.pop();
+			Object value = fieldMap.get(field);
+			if (value instanceof LinkedHashMap) {
+				for (Object o : ((Map) value).keySet()) {
+					fields.push(field + "." + o.toString());
+				}
+			} else {
+				predicate = predicate == null ?
+						getPredicate(field, fieldMap.get(field), cb, root) :
+						cb.and(predicate, getPredicate(field, fieldMap.get(field), cb, root));
+			}
+		}
+	}
+
+
 
 	public Predicate getPredicate(String f, Object o, CriteriaBuilder cb, Root<?> root, String path) {
+		path = Strings.isEmpty(path) ? path : QueryUtils.changeFirstChar(path, QueryUtils.StringEnums.lower);
 		if (f.contains("&")) {
 			return getPredicate(f.replace("&", ""), o, cb, root, path);
 		} else if (f.contains("!")) {
