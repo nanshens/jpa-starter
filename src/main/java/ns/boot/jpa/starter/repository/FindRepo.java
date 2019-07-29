@@ -66,7 +66,7 @@ public class FindRepo {
 			Root<?> root = cq.from(targetCls.get(entity));
 
 //			cq.multiselect(root.get("code"), root.get("name"));
-			cq.where(forFields(fields, fieldMap, cb, root, null, ""));
+			cq.where(buildPredicate(fieldMap, cb, root, null));
 			List<?> resultList = entityManager.createQuery(cq).getResultList();
 			System.out.println(resultList);
 			result.add(resultList);
@@ -82,63 +82,57 @@ public class FindRepo {
 //		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
 
-	public Predicate forFields(Iterator fields, Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate, String rootPath) {
-
-		while (fields.hasNext()) {
-			String field = fields.next().toString();
-			Object value = fieldMap.get(field);
-
-			if (value instanceof LinkedHashMap) {
-				return forFields(((Map) value).keySet().iterator(), (Map) value, cb, root, predicate, field);
-			} else {
-				predicate = predicate == null ?
-						getPredicate(field, fieldMap.get(field), cb, root, rootPath) :
-						cb.and(predicate, getPredicate(field, fieldMap.get(field), cb, root, rootPath));
-			}
-		}
-		return predicate;
-	}
-
-	public void method(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate) {
+	public Predicate buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate) {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
 
 		while (!fields.empty()) {
 			String field = fields.pop();
-			Object value = fieldMap.get(field);
+			String[] fs = field.split("\\.");
+			Object value = getObject(fieldMap, fs, 0);
+
 			if (value instanceof LinkedHashMap) {
 				for (Object o : ((Map) value).keySet()) {
 					fields.push(field + "." + o.toString());
 				}
 			} else {
 				predicate = predicate == null ?
-						getPredicate(field, fieldMap.get(field), cb, root) :
-						cb.and(predicate, getPredicate(field, fieldMap.get(field), cb, root));
+						getPredicate(fs, value, cb, root) :
+						cb.and(predicate, getPredicate(fs, value, cb, root));
 			}
 		}
+		return predicate;
+	}
+
+	public Object getObject(Map objectMap, String[] fs, int i) {
+		return i < fs.length - 1 ? getObject((Map) objectMap.get(fs[i]), fs, i + 1) : objectMap.get(fs[i]);
+	}
+
+	public Path getPath(Root root, Path path, String[] fs, int i) {
+		return i < fs.length ? getPath(root, path == null ? root.get(fs[i]) : path.get(fs[i]), fs, i + 1) : path;
 	}
 
 
-
-	public Predicate getPredicate(String f, Object o, CriteriaBuilder cb, Root<?> root, String path) {
-		path = Strings.isEmpty(path) ? path : QueryUtils.changeFirstChar(path, QueryUtils.StringEnums.lower);
+	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
+		String f = fs[fs.length - 1];
 		if (f.contains("&")) {
-			return getPredicate(f.replace("&", ""), o, cb, root, path);
+			fs[fs.length - 1] = f.replace("&", "");
+			return getPredicate(fs, o, cb, root);
 		} else if (f.contains("!")) {
 //			not in,not like :not realize
-			String tf = f.replace("!", "");
-			Path finPath = Strings.isEmpty(path) ? root.get(tf) : root.get(path).get(tf);
+			fs[fs.length - 1] = f.replace("!", "");
+			Path finPath = getPath(root, null, fs, 0);
 			if (o == null) {
 				return cb.isNotNull(finPath);
 			}else {
 				return cb.notEqual(finPath, o);
 			}
 		} else if (f.contains("~")) {
-			String tf = f.replace("~", "");
-			Path finPath = Strings.isEmpty(path) ? root.get(tf) : root.get(path).get(tf);
+			fs[fs.length - 1] = f.replace("~", "");
+			Path finPath = getPath(root, null, fs, 0);
 			return cb.like(finPath, o.toString());
 		} else {
-			Path finPath = Strings.isEmpty(path) ? root.get(f) : root.get(path).get(f);
+			Path finPath = getPath(root, null, fs, 0);
 			if (o instanceof ArrayList) {
 				return finPath.in((ArrayList) o);
 			} else {
