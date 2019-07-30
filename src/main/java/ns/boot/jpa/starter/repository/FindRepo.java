@@ -1,6 +1,7 @@
 package ns.boot.jpa.starter.repository;
 
 import com.alibaba.fastjson.JSONObject;
+import lombok.SneakyThrows;
 import ns.boot.jpa.starter.utils.QueryUtils;
 import org.reflections.Reflections;
 import org.springframework.stereotype.Repository;
@@ -13,8 +14,13 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.lang.reflect.Field;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -107,6 +113,7 @@ public class FindRepo {
 	}
 
 
+	@SneakyThrows
 	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
 		String f = fs[fs.length - 1];
 
@@ -123,8 +130,28 @@ public class FindRepo {
 		}
 
 		// parse date, timestamp localdate, localdatetime, localtime and so on...
-		if(fClass == LocalDate.class) {
-			o = LocalDate.parse(o.toString());
+		if(fClass == LocalDate.class || fClass == LocalTime.class || fClass == LocalDateTime.class) {
+			String v = o.toString();
+			if (v.length() < 9) {
+				o = LocalTime.parse(o.toString());
+			} else if (v.length() < 11) {
+				o = LocalDate.parse(o.toString());
+			} else {
+				o = LocalDateTime.parse(o.toString());
+			}
+		}
+
+		if (fClass == Date.class) {
+			String v = o.toString();
+			DateFormat format;
+			if (v.length() < 9){
+				format = new SimpleDateFormat("HH:mm:ss");
+			} else if (v.length() < 11) {
+				format = new SimpleDateFormat("yyyy-MM-dd");
+			} else {
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			}
+			o = format.parse(v);
 		}
 
 		if (f.contains("&")) {
