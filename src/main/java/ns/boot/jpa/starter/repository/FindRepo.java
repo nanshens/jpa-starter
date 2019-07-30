@@ -1,24 +1,19 @@
 package ns.boot.jpa.starter.repository;
 
 import com.alibaba.fastjson.JSONObject;
-import com.sun.org.apache.bcel.internal.generic.NEW;
-import lombok.SneakyThrows;
-import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.utils.QueryUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.reflections.Reflections;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,7 +30,6 @@ import java.util.Stack;
 @Repository
 public class FindRepo {
 
-	@SneakyThrows
 	public List find(JSONObject jso, String url, EntityManager entityManager) {
 		List result = new ArrayList();
 		Map jsoMap = jso.toJavaObject(Map.class);
@@ -58,15 +52,14 @@ public class FindRepo {
 		while (it.hasNext()) {
 			String entity = it.next().toString();
 			Map fieldMap = ((Map)jsoMap.get(entity));
-			Iterator fields = fieldMap.keySet().iterator();
-
+			Map<String, Field> cfs = QueryUtils.getClassField(targetCls.get(entity));
 			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 //			CriteriaQuery<?> cq = cb.createTupleQuery();
 			CriteriaQuery<?> cq = cb.createQuery(targetCls.get(entity));
 			Root<?> root = cq.from(targetCls.get(entity));
 
 //			cq.multiselect(root.get("code"), root.get("name"));
-			cq.where(buildPredicate(fieldMap, cb, root, null));
+			cq.where(buildPredicate(fieldMap, cb, root, null, cfs));
 			List<?> resultList = entityManager.createQuery(cq).getResultList();
 			System.out.println(resultList);
 			result.add(resultList);
@@ -82,7 +75,7 @@ public class FindRepo {
 //		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
 
-	public Predicate buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate) {
+	public Predicate buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate, Map<String, Field> cfs) {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
 
@@ -96,9 +89,10 @@ public class FindRepo {
 					fields.push(field + "." + o.toString());
 				}
 			} else {
+				Class c = cfs.get(field).getType();
 				predicate = predicate == null ?
-						getPredicate(fs, value, cb, root) :
-						cb.and(predicate, getPredicate(fs, value, cb, root));
+						getPredicate(fs, value, cb, root, c) :
+						cb.and(predicate, getPredicate(fs, value, cb, root, c));
 			}
 		}
 		return predicate;
@@ -113,11 +107,29 @@ public class FindRepo {
 	}
 
 
-	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
+	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
 		String f = fs[fs.length - 1];
+
+		if (fClass.isEnum()) {
+			if (o instanceof ArrayList) {
+				List list = new ArrayList();
+				for (Object old : (ArrayList) o) {
+					list.add(Enum.valueOf(fClass, old.toString()));
+				}
+				o = list;
+			} else {
+				o = Enum.valueOf(fClass, o.toString());
+			}
+		}
+
+		// parse date, timestamp localdate, localdatetime, localtime and so on...
+		if(fClass == LocalDate.class) {
+			o = LocalDate.parse(o.toString());
+		}
+
 		if (f.contains("&")) {
 			fs[fs.length - 1] = f.replace("&", "");
-			return getPredicate(fs, o, cb, root);
+			return getPredicate(fs, o, cb, root, fClass);
 		} else if (f.contains("!")) {
 //			not in,not like :not realize
 			fs[fs.length - 1] = f.replace("!", "");

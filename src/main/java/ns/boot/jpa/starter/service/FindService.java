@@ -22,7 +22,7 @@ public class FindService {
 	 * 2. create conditions
 	 * 3. get result
 	 * 4. format result json
-	 *
+	 * 5. exception handle
 	 */
 	public List find(JSONObject jso, String baseUrl, EntityManager entityManager) {
 		return findRepo.find(jso, baseUrl, entityManager);

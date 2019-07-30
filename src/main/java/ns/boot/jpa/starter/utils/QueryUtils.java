@@ -59,14 +59,14 @@ public class QueryUtils {
         }
     }
 
-    public static Map<String, Object> getAllFields(Class clz, Map<String, Object> map, String prefix) {
+    public static Map<String, Field> getAllFields(Class clz, Map<String, Field> map, String prefix) {
         if (clz.getSuperclass() == null) {
             return map;
         } else {
             Field[] fields = clz.getDeclaredFields();
             for (Field field : fields) {
                if (isBaseType(field.getType())){
-                   map.put(prefix + field.getName(), null);
+                   map.put(prefix + field.getName(), field);
                }else {
                    return getAllFields(field.getType(), map, changeFirstChar(field.getType().getSimpleName(), StringEnums.lower) + ".");
                }
@@ -137,6 +137,32 @@ public class QueryUtils {
         }
         map.put("andFilters", afs);
         map.put("orders", qo);
+        return map;
+    }
+
+    public static Map<String, Field> getClassField(Class c) {
+        Map<String, Field> map = new HashMap<>();
+        Stack<Field> stack = new Stack<>();
+        Stack<String> prefix = new Stack<>();
+
+        for (Field field : getAllFields(c, new ArrayList<>())) {
+            stack.push(field);
+            prefix.push("");
+        }
+
+        while (!stack.empty()) {
+            Field s = stack.pop();
+            String pre = prefix.pop();
+
+            if (isBaseType(s.getType())) {
+                map.put(pre + s.getName(), s);
+            } else {
+                for (Field field : QueryUtils.getAllFields(s.getType(), new ArrayList<>())) {
+                    stack.push(field);
+                    prefix.push(pre + changeFirstChar(s.getType().getSimpleName(), StringEnums.lower) + ".");
+                }
+            }
+        }
         return map;
     }
 
