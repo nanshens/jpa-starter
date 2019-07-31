@@ -2,6 +2,7 @@ package ns.boot.jpa.starter.repository;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
+import ns.boot.jpa.starter.enums.MatchType;
 import ns.boot.jpa.starter.utils.QueryUtils;
 import org.reflections.Reflections;
 import org.springframework.stereotype.Repository;
@@ -116,7 +117,57 @@ public class FindRepo {
 	@SneakyThrows
 	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
 		String f = fs[fs.length - 1];
+		if (f.contains("&")) {
+			fs[fs.length - 1] = f.replace("&", "");
+			return getPredicate(fs, o, cb, root, fClass);
+		} else if (f.contains("!")) {
+//			not in,not like :not realize
+			fs[fs.length - 1] = f.replace("!", "");
+			Path finPath = getPath(root, null, fs, 0);
+			if (o == null) {
+				return cb.isNotNull(finPath);
+			}else {
+				o = getValue(fClass, o);
+				return cb.notEqual(finPath, o);
+			}
+		} else if (f.contains("~")) {
+			fs[fs.length - 1] = f.replace("~", "");
+			Path finPath = getPath(root, null, fs, 0);
+			return cb.like(finPath, o.toString());
+		} else {
+			Path finPath = getPath(root, null, fs, 0);
+			if (o instanceof ArrayList) {
+				o = getValue(fClass, o);
+				return finPath.in((ArrayList) o);
+			} else {
+				if (o == null) {
+					return cb.isNull(finPath);
+				} else {
+					String v = o.toString();
+					if (v.contains("<=")) {
+						o = getValue(fClass, v.replace("<=", ""));
+						return cb.lessThanOrEqualTo(finPath, (Comparable) o);
+					} else if (v.contains(">=")) {
+						o = getValue(fClass, v.replace(">=", ""));
+						return cb.greaterThanOrEqualTo(finPath, (Comparable) o);
+					} else if (v.contains("<")) {
+						o = getValue(fClass, v.replace("<", ""));
+						return cb.lessThan(finPath, (Comparable) o);
+					} else if (v.contains(">")) {
+						o = getValue(fClass, v.replace(">", ""));
+						return cb.greaterThan(finPath, (Comparable) o);
+					} else {
+						o = getValue(fClass, o);
+						return (Predicate) MatchType.EQ.getMethod().invoke(cb, finPath, o);
+					}
+				}
+			}
+		}
+	}
 
+
+	@SneakyThrows
+	public Object getValue(Class fClass, Object o) {
 		if (fClass.isEnum()) {
 			if (o instanceof ArrayList) {
 				List list = new ArrayList();
@@ -153,45 +204,6 @@ public class FindRepo {
 			}
 			o = format.parse(v);
 		}
-
-		if (f.contains("&")) {
-			fs[fs.length - 1] = f.replace("&", "");
-			return getPredicate(fs, o, cb, root, fClass);
-		} else if (f.contains("!")) {
-//			not in,not like :not realize
-			fs[fs.length - 1] = f.replace("!", "");
-			Path finPath = getPath(root, null, fs, 0);
-			if (o == null) {
-				return cb.isNotNull(finPath);
-			}else {
-				return cb.notEqual(finPath, o);
-			}
-		} else if (f.contains("~")) {
-			fs[fs.length - 1] = f.replace("~", "");
-			Path finPath = getPath(root, null, fs, 0);
-			return cb.like(finPath, o.toString());
-		} else {
-			Path finPath = getPath(root, null, fs, 0);
-			if (o instanceof ArrayList) {
-				return finPath.in((ArrayList) o);
-			} else {
-				if (o == null) {
-					return cb.isNull(finPath);
-				} else {
-					String v = o.toString();
-					if (v.contains("<=")) {
-						return cb.lessThanOrEqualTo(finPath, v.replace("<=", ""));
-					} else if (v.contains(">=")) {
-						return cb.greaterThanOrEqualTo(finPath, v.replace(">=", ""));
-					} else if (v.contains("<")) {
-						return cb.lessThan(finPath, v.replace("<", ""));
-					} else if (v.contains(">")) {
-						return cb.greaterThan(finPath, v.replace(">", ""));
-					} else {
-						return cb.equal(finPath, o);
-					}
-				}
-			}
-		}
+		return o;
 	}
 }

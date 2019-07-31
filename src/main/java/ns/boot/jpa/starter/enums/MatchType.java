@@ -1,8 +1,11 @@
 package ns.boot.jpa.starter.enums;
 
+import lombok.SneakyThrows;
+
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Path;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.EnumSet;
 
@@ -27,12 +30,21 @@ public enum MatchType {
     private Class targetClass;
     private Class[] paramTypes;
     private String cbName;
+    private Method method;
 
+    @SneakyThrows
     MatchType(String cbName, Class targetClass, Class pathClass, Class ...paramTypes){
         this.targetClass = targetClass;
         this.pathClass = pathClass;
         this.cbName = cbName;
         this.paramTypes = paramTypes;
+            if (paramTypes.length == 0) {
+                this.method = targetClass.getMethod(cbName, pathClass);
+            } else if (paramTypes.length == 1) {
+                this.method = targetClass.getMethod(cbName, pathClass, paramTypes[0]);
+            } else if (paramTypes.length == 2) {
+                this.method = targetClass.getMethod(cbName, pathClass, paramTypes[0], paramTypes[1]);
+            }
     }
 
     public Class[] getParamTypes(){
@@ -49,6 +61,10 @@ public enum MatchType {
 
     public Class getTargetClass() {
         return targetClass;
+    }
+
+    public Method getMethod() {
+        return method;
     }
 
     public static EnumSet<MatchType> getAllTypes(){
