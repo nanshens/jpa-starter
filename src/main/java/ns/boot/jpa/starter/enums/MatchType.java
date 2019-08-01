@@ -23,6 +23,7 @@ public enum MatchType {
     LIKE("like", CriteriaBuilder.class, Expression.class, String.class),
     NOTLIKE("notLike", CriteriaBuilder.class, Expression.class, String.class),
     IN("in", Path.class, Collection.class),
+    NOTIN("not", CriteriaBuilder.class, Expression.class),
     ISNULL("isNull", CriteriaBuilder.class, Expression.class),
     ISNOTNULL("isNotNull", CriteriaBuilder.class, Expression.class),
     BETWEEN("between", CriteriaBuilder.class, Expression.class, Comparable.class, Comparable.class);
