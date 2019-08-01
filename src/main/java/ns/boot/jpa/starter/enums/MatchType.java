@@ -21,6 +21,7 @@ public enum MatchType {
     GE("greaterThanOrEqualTo", CriteriaBuilder.class, Expression.class, Comparable.class),
     LE("lessThanOrEqualTo", CriteriaBuilder.class, Expression.class, Comparable.class),
     LIKE("like", CriteriaBuilder.class, Expression.class, String.class),
+    NOTLIKE("notLike", CriteriaBuilder.class, Expression.class, String.class),
     IN("in", Path.class, Collection.class),
     ISNULL("isNull", CriteriaBuilder.class, Expression.class),
     ISNOTNULL("isNotNull", CriteriaBuilder.class, Expression.class),

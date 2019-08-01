@@ -167,6 +167,63 @@ public class FindRepo {
 
 
 	@SneakyThrows
+	public Predicate getPredicate1(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
+		String f = fs[fs.length - 1];
+		if (f.contains("&")) {
+			fs[fs.length - 1] = f.replace("&", "");
+			return getPredicate1(fs, o, cb, root, fClass);
+		} else if (f.contains("!")) {
+//			not in,not like :not realize
+			fs[fs.length - 1] = f.replace("!", "");
+			if (o == null) {
+				Path finPath = getPath(root, null, fs, 0);
+				return cb.isNotNull(finPath);
+			} else if (o instanceof ArrayList) {
+				System.out.println("not in");
+			} else if (f.contains("~")) {
+				fs[fs.length - 1] = f.replace("~", "");
+				Path finPath = getPath(root, null, fs, 0);
+				return (Predicate) MatchType.NOTLIKE.getMethod().invoke(cb, finPath, o);
+			} else {
+				Path finPath = getPath(root, null, fs, 0);
+				o = getValue(fClass, o);
+				return cb.notEqual(finPath, o);
+			}
+		} else if (o instanceof ArrayList) {
+			Path finPath = getPath(root, null, fs, 0);
+			o = getValue(fClass, o);
+			return (Predicate) MatchType.IN.getMethod().invoke(cb, finPath, o);
+		} else if (f.contains("~")) {
+			fs[fs.length - 1] = f.replace("~", "");
+			Path finPath = getPath(root, null, fs, 0);
+			return (Predicate) MatchType.LIKE.getMethod().invoke(cb, finPath, o);
+		} else if (f.contains("<=")) {
+			fs[fs.length - 1] = f.replace("<=", "");
+			Path finPath = getPath(root, null, fs, 0);
+			o = getValue(fClass, o);
+			return (Predicate) MatchType.LE.getMethod().invoke(cb, finPath, o);
+		} else if (f.contains(">=")) {
+			fs[fs.length - 1] = f.replace(">=", "");
+			Path finPath = getPath(root, null, fs, 0);
+			o = getValue(fClass, o);
+			return (Predicate) MatchType.GE.getMethod().invoke(cb, finPath, o);
+		} else if (f.contains("<")) {
+			fs[fs.length - 1] = f.replace("<", "");
+			Path finPath = getPath(root, null, fs, 0);
+			return (Predicate) MatchType.LT.getMethod().invoke(cb, finPath, o);
+		} else if (f.contains(">")) {
+			fs[fs.length - 1] = f.replace(">", "");
+			Path finPath = getPath(root, null, fs, 0);
+			return (Predicate) MatchType.GT.getMethod().invoke(cb, finPath, o);
+		} else {
+			Path finPath = getPath(root, null, fs, 0);
+			o = getValue(fClass, o);
+			return (Predicate) MatchType.EQ.getMethod().invoke(cb, finPath, o);
+		}
+		return null;
+	}
+
+	@SneakyThrows
 	public Object getValue(Class fClass, Object o) {
 		if (fClass.isEnum()) {
 			if (o instanceof ArrayList) {
