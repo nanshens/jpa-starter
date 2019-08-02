@@ -11,6 +11,7 @@ import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 /**
  * @author ns
@@ -37,11 +39,20 @@ import java.util.Stack;
 @Repository
 public class FindRepo {
 
+	private final static String EQ= "=";
+	private final static String NOT = "!";
+	private final static String LIKE = "~";
+	private final static String GT = ">";
+	private final static String GE = ">=";
+	private final static String LT = "<";
+	private final static String LE = "<=";
+	private final static String AND = "&";
+
 	public List find(JSONObject jso, String url, EntityManager entityManager) {
 		List result = new ArrayList();
 		Map jsoMap = jso.toJavaObject(Map.class);
 
-		Map<String, Class<?>> targetCls = new HashMap<>();
+		Map<String, Class<?>> targetCls = new HashMap<>(1);
 
 		Reflections reflections = new Reflections(url);
 		Set<Class<?>> classSet = reflections.getTypesAnnotatedWith(Entity.class);
@@ -61,13 +72,57 @@ public class FindRepo {
 			Map fieldMap = ((Map)jsoMap.get(entity));
 			Map<String, Field> cfs = QueryUtils.getClassField(targetCls.get(entity));
 			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-//			CriteriaQuery<?> cq = cb.createTupleQuery();
+
 			CriteriaQuery<?> cq = cb.createQuery(targetCls.get(entity));
 			Root<?> root = cq.from(targetCls.get(entity));
-
+//			tuple query
+//			CriteriaQuery<?> cq = cb.createTupleQuery();
 //			cq.multiselect(root.get("code"), root.get("name"));
-			cq.where(buildPredicate(fieldMap, cb, root, null, cfs));
-			List<?> resultList = entityManager.createQuery(cq).getResultList();
+
+//			get page sort column
+//			"@column": {
+//				"except": [],
+//				"include": ["max(id):maxid"]
+//			},
+//			"@page": {
+//				"page": 1,
+//						"limit": 10
+//			},
+//			"@sort": {
+//				"f1.f3": "asc",
+//						"f2": "desc",
+//            ...
+//			}
+
+			Map column = (Map) fieldMap.get("@column");
+			Map pageable = (Map) fieldMap.get("@page");
+			Map sort = (LinkedHashMap) fieldMap.get("@sort");
+
+			if (sort != null) {
+				sort.forEach((k, v) -> {
+					String[] ks = k.toString().split("\\.");
+					if (v.toString().equals("desc")){
+						cq.orderBy(cb.desc(getPath(root, null, ks, 0)));
+					}else {
+						cq.orderBy(cb.asc(getPath(root, null, ks, 0)));
+					}
+				});
+
+			}
+
+			fieldMap.remove("@page");
+			fieldMap.remove("@sort");
+
+//			cq.orderBy(cb.asc(path));
+
+			int page = (int)pageable.get("page");
+			int limit = (int)pageable.get("limit");
+
+			Predicate p= buildPredicate(fieldMap, cb, root, null, cfs);
+			if (p != null){
+				cq.where(p);
+			}
+			List<?> resultList = entityManager.createQuery(cq).setFirstResult((page - 1) * limit).setMaxResults(limit).getResultList();
 			System.out.println(resultList);
 			result.add(resultList);
 		}
@@ -102,6 +157,7 @@ public class FindRepo {
 						cb.and(predicate, getPredicate1(fs, value, cb, root, c));
 			}
 		}
+
 		return predicate;
 	}
 
@@ -115,23 +171,23 @@ public class FindRepo {
 	}
 
 	public String clearChar(String str) {
-		str = str.replace("<", "")
-				.replace(">", "")
-				.replace("=", "")
-				.replace("~", "")
-				.replace("!", "")
-				.replace("&", "");
+		str = str.replace(LT, "")
+				.replace(GT, "")
+				.replace(EQ, "")
+				.replace(LIKE, "")
+				.replace(NOT, "")
+				.replace(AND, "");
 		return str;
 	}
 	@SneakyThrows
 	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
 		String f = fs[fs.length - 1];
-		if (f.contains("&")) {
-			fs[fs.length - 1] = f.replace("&", "");
+		if (f.contains(AND)) {
+			fs[fs.length - 1] = f.replace(AND, "");
 			return getPredicate(fs, o, cb, root, fClass);
-		} else if (f.contains("!")) {
+		} else if (f.contains(NOT)) {
 //			not in,not like :not realize
-			fs[fs.length - 1] = f.replace("!", "");
+			fs[fs.length - 1] = f.replace(NOT, "");
 			Path finPath = getPath(root, null, fs, 0);
 			if (o == null) {
 				return cb.isNotNull(finPath);
@@ -139,8 +195,8 @@ public class FindRepo {
 				o = getValue(fClass, o);
 				return cb.notEqual(finPath, o);
 			}
-		} else if (f.contains("~")) {
-			fs[fs.length - 1] = f.replace("~", "");
+		} else if (f.contains(LIKE)) {
+			fs[fs.length - 1] = f.replace(LIKE, "");
 			Path finPath = getPath(root, null, fs, 0);
 			return cb.like(finPath, o.toString());
 		} else {
@@ -153,17 +209,17 @@ public class FindRepo {
 					return cb.isNull(finPath);
 				} else {
 					String v = o.toString();
-					if (v.contains("<=")) {
-						o = getValue(fClass, v.replace("<=", ""));
+					if (v.contains(LE)) {
+						o = getValue(fClass, v.replace(LE, ""));
 						return cb.lessThanOrEqualTo(finPath, (Comparable) o);
-					} else if (v.contains(">=")) {
-						o = getValue(fClass, v.replace(">=", ""));
+					} else if (v.contains(GE)) {
+						o = getValue(fClass, v.replace(GE, ""));
 						return cb.greaterThanOrEqualTo(finPath, (Comparable) o);
-					} else if (v.contains("<")) {
-						o = getValue(fClass, v.replace("<", ""));
+					} else if (v.contains(LT)) {
+						o = getValue(fClass, v.replace(LT, ""));
 						return cb.lessThan(finPath, (Comparable) o);
-					} else if (v.contains(">")) {
-						o = getValue(fClass, v.replace(">", ""));
+					} else if (v.contains(GT)) {
+						o = getValue(fClass, v.replace(GT, ""));
 						return cb.greaterThan(finPath, (Comparable) o);
 					} else {
 						o = getValue(fClass, o);
@@ -178,53 +234,39 @@ public class FindRepo {
 	@SneakyThrows
 	public Predicate getPredicate1(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
 		String f = fs[fs.length - 1];
-		if (f.contains("&")) {
-			fs[fs.length - 1] = f.replace("&", "");
+		Path path = getPath(root, null, fs, 0);
+		o = getValue(fClass, o);
+		if (f.contains(AND)) {
+			fs[fs.length - 1] = f.replace(AND, "");
 			return getPredicate1(fs, o, cb, root, fClass);
-		} else if (f.contains("!")) {
-//			not in,not like :not realize
+		} else if (f.contains(NOT)) {
 			if (o == null) {
-				Path finPath = getPath(root, null, fs, 0);
-				return cb.isNotNull(finPath);
+				return (Predicate) MatchType.IS_NOT_NULL.getMethod().invoke(cb, path);
 			} else if (o instanceof ArrayList) {
-				Path finPath = getPath(root, null, fs, 0);
-				o = getValue(fClass, o);
-				return (Predicate) MatchType.NOTIN.getMethod().invoke(cb, MatchType.IN.getMethod().invoke(finPath, o));
-			} else if (f.contains("~")) {
-				Path finPath = getPath(root, null, fs, 0);
-				return (Predicate) MatchType.NOTLIKE.getMethod().invoke(cb, finPath, o);
+				return (Predicate) MatchType.NOT_IN.getMethod().invoke(cb, MatchType.IN.getMethod().invoke(path, o));
+			} else if (f.contains(LIKE)) {
+				return (Predicate) MatchType.NOT_LIKE.getMethod().invoke(cb, path, o);
 			} else {
-				Path finPath = getPath(root, null, fs, 0);
-				o = getValue(fClass, o);
-				return cb.notEqual(finPath, o);
+				return (Predicate) MatchType.NE.getMethod().invoke(cb, path, o);
 			}
 		} else if (o instanceof ArrayList) {
-			Path finPath = getPath(root, null, fs, 0);
-			o = getValue(fClass, o);
-			return (Predicate) MatchType.IN.getMethod().invoke(finPath, o);
-		} else if (f.contains("~")) {
-			Path finPath = getPath(root, null, fs, 0);
-			return (Predicate) MatchType.LIKE.getMethod().invoke(cb, finPath, o);
-		} else if (f.contains("<=")) {
-			Path finPath = getPath(root, null, fs, 0);
-			o = getValue(fClass, o);
-			return (Predicate) MatchType.LE.getMethod().invoke(cb, finPath, o);
-		} else if (f.contains(">=")) {
-			Path finPath = getPath(root, null, fs, 0);
-			o = getValue(fClass, o);
-			return (Predicate) MatchType.GE.getMethod().invoke(cb, finPath, o);
-		} else if (f.contains("<")) {
-			Path finPath = getPath(root, null, fs, 0);
-			o = getValue(fClass, o);
-			return (Predicate) MatchType.LT.getMethod().invoke(cb, finPath, o);
-		} else if (f.contains(">")) {
-			Path finPath = getPath(root, null, fs, 0);
-			o = getValue(fClass, o);
-			return (Predicate) MatchType.GT.getMethod().invoke(cb, finPath, o);
+			return (Predicate) MatchType.IN.getMethod().invoke(path, o);
+		} else if (f.contains(LIKE)) {
+			return (Predicate) MatchType.LIKE.getMethod().invoke(cb, path, o);
+		} else if (f.contains(LE)) {
+			return (Predicate) MatchType.LE.getMethod().invoke(cb, path, o);
+		} else if (f.contains(GE)) {
+			return (Predicate) MatchType.GE.getMethod().invoke(cb, path, o);
+		} else if (f.contains(LT)) {
+			return (Predicate) MatchType.LT.getMethod().invoke(cb, path, o);
+		} else if (f.contains(GT)) {
+			return (Predicate) MatchType.GT.getMethod().invoke(cb, path, o);
 		} else {
-			Path finPath = getPath(root, null, fs, 0);
-			o = getValue(fClass, o);
-			return (Predicate) MatchType.EQ.getMethod().invoke(cb, finPath, o);
+			if (o == null) {
+				return (Predicate) MatchType.IS_NULL.getMethod().invoke(cb, path);
+			}else {
+				return (Predicate) MatchType.EQ.getMethod().invoke(cb, path, o);
+			}
 		}
 	}
 
@@ -232,30 +274,25 @@ public class FindRepo {
 	public Object getValue(Class fClass, Object o) {
 		if (fClass.isEnum()) {
 			if (o instanceof ArrayList) {
-				List list = new ArrayList();
-				for (Object old : (ArrayList) o) {
-					list.add(Enum.valueOf(fClass, old.toString()));
-				}
-				o = list;
+				o = ((ArrayList<String>) o).stream().map(e -> Enum.valueOf(fClass, e)).collect(Collectors.toList());
 			} else {
-				o = Enum.valueOf(fClass, o.toString());
+				o = Enum.valueOf(fClass, (String)o);
 			}
 		}
 
-		// parse date, timestamp localdate, localdatetime, localtime and so on...
 		if(fClass == LocalDate.class || fClass == LocalTime.class || fClass == LocalDateTime.class) {
-			String v = o.toString();
+			String v = (String)o;
 			if (v.length() < 9) {
-				o = LocalTime.parse(o.toString());
+				o = LocalTime.parse(v);
 			} else if (v.length() < 11) {
-				o = LocalDate.parse(o.toString());
+				o = LocalDate.parse(v);
 			} else {
-				o = LocalDateTime.parse(o.toString());
+				o = LocalDateTime.parse(v);
 			}
 		}
 
 		if (fClass == Date.class) {
-			String v = o.toString();
+			String v = (String)o;
 			DateFormat format;
 			if (v.length() < 9){
 				format = new SimpleDateFormat("HH:mm:ss");

@@ -31,15 +31,15 @@ request json
 
         ...,
 
-        "@Column": {
+        "@column": {
             "except": [],
-            "include": [""max(id):maxid""]
+            "include": ["max(id):maxid"]
         },
-        "@Page": {
+        "@page": {
             "page": 1,
             "limit": 10
         },
-        "@Sort": {
+        "@sort": {
             "f1": "asc",
             "f2": "desc",
             ...

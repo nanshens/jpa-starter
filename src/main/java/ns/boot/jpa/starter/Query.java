@@ -281,7 +281,7 @@ public class Query<T> implements Specification<T> {
 			return (Predicate) method.invoke(buildPath(queryFilter.getName(), root), queryFilter.getValue());
 		} else if (matchType.equals(MatchType.BETWEEN)) {
 			return (Predicate) method.invoke(cb, buildPath(queryFilter.getName(), root), ((List) queryFilter.getValue()).get(0), ((List) queryFilter.getValue()).get(1));
-		} else if (matchType.equals(MatchType.ISNOTNULL) || matchType.equals(MatchType.ISNULL)) {
+		} else if (matchType.equals(MatchType.IS_NOT_NULL) || matchType.equals(MatchType.IS_NULL)) {
 			return (Predicate) method.invoke(cb, buildPath(queryFilter.getName(), root));
 		} else {
 			return (Predicate) method.invoke(cb, buildPath(queryFilter.getName(), root), queryFilter.getValue());

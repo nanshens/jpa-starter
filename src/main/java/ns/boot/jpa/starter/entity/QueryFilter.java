@@ -79,11 +79,11 @@ public  class QueryFilter {
     }
 
     public static QueryFilter isNull(String name){
-        return new QueryFilter(name,null, MatchType.ISNULL);
+        return new QueryFilter(name,null, MatchType.IS_NULL);
     }
 
     public static QueryFilter isNotNull(String name){
-        return new QueryFilter(name, null, MatchType.ISNOTNULL);
+        return new QueryFilter(name, null, MatchType.IS_NOT_NULL);
     }
 
     public static <T extends Comparable> QueryFilter between(String name, T minValue, T maxValue){

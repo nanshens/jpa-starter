@@ -21,11 +21,11 @@ public enum MatchType {
     GE("greaterThanOrEqualTo", CriteriaBuilder.class, Expression.class, Comparable.class),
     LE("lessThanOrEqualTo", CriteriaBuilder.class, Expression.class, Comparable.class),
     LIKE("like", CriteriaBuilder.class, Expression.class, String.class),
-    NOTLIKE("notLike", CriteriaBuilder.class, Expression.class, String.class),
+    NOT_LIKE("notLike", CriteriaBuilder.class, Expression.class, String.class),
     IN("in", Path.class, Collection.class),
-    NOTIN("not", CriteriaBuilder.class, Expression.class),
-    ISNULL("isNull", CriteriaBuilder.class, Expression.class),
-    ISNOTNULL("isNotNull", CriteriaBuilder.class, Expression.class),
+    NOT_IN("not", CriteriaBuilder.class, Expression.class),
+    IS_NULL("isNull", CriteriaBuilder.class, Expression.class),
+    IS_NOT_NULL("isNotNull", CriteriaBuilder.class, Expression.class),
     BETWEEN("between", CriteriaBuilder.class, Expression.class, Comparable.class, Comparable.class);
 
     private Class pathClass;
