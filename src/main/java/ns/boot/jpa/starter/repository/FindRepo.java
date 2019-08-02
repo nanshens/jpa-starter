@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Order;
@@ -49,6 +50,8 @@ public class FindRepo {
 	private final static String AND = "&";
 
 	public List find(JSONObject jso, String url, EntityManager entityManager) {
+
+//	************************ get entity class *****************************
 		List result = new ArrayList();
 		Map jsoMap = jso.toJavaObject(Map.class);
 
@@ -79,24 +82,29 @@ public class FindRepo {
 //			CriteriaQuery<?> cq = cb.createTupleQuery();
 //			cq.multiselect(root.get("code"), root.get("name"));
 
-//			get page sort column
+//			get  column
 //			"@column": {
 //				"except": [],
 //				"include": ["max(id):maxid"]
 //			},
-//			"@page": {
-//				"page": 1,
-//						"limit": 10
-//			},
-//			"@sort": {
-//				"f1.f3": "asc",
-//						"f2": "desc",
-//            ...
-//			}
 
+//	************************ build page sort *****************************
 			Map column = (Map) fieldMap.get("@column");
 			Map pageable = (Map) fieldMap.get("@page");
 			Map sort = (LinkedHashMap) fieldMap.get("@sort");
+
+			fieldMap.remove("@page");
+			fieldMap.remove("@sort");
+			fieldMap.remove("@column");
+
+//	************************ build Predicate *****************************
+
+			Predicate p= buildPredicate(fieldMap, cb, root, null, cfs);
+			if (p != null){
+				cq.where(p);
+			}
+
+//	************************ build sort and page *****************************
 
 			if (sort != null) {
 				sort.forEach((k, v) -> {
@@ -110,20 +118,20 @@ public class FindRepo {
 
 			}
 
-			fieldMap.remove("@page");
-			fieldMap.remove("@sort");
+			Query query = entityManager.createQuery(cq);
 
-//			cq.orderBy(cb.asc(path));
-
-			int page = (int)pageable.get("page");
-			int limit = (int)pageable.get("limit");
-
-			Predicate p= buildPredicate(fieldMap, cb, root, null, cfs);
-			if (p != null){
-				cq.where(p);
+			if (pageable != null) {
+				int page = (int)pageable.get("page");
+				int limit = (int)pageable.get("limit");
+				query.setFirstResult((page - 1) * limit)
+				.setMaxResults(limit);
 			}
-			List<?> resultList = entityManager.createQuery(cq).setFirstResult((page - 1) * limit).setMaxResults(limit).getResultList();
-			System.out.println(resultList);
+
+//	************************ get result list *****************************
+
+			List<?> resultList = query.getResultList();
+
+//	************************ build json *****************************
 			result.add(resultList);
 		}
 		return result;
@@ -153,8 +161,8 @@ public class FindRepo {
 			} else {
 				Class c = cfs.get(clearChar(field)).getType();
 				predicate = predicate == null ?
-						getPredicate1(fs, value, cb, root, c) :
-						cb.and(predicate, getPredicate1(fs, value, cb, root, c));
+						getPredicate(fs, value, cb, root, c) :
+						cb.and(predicate, getPredicate(fs, value, cb, root, c));
 			}
 		}
 
@@ -179,66 +187,15 @@ public class FindRepo {
 				.replace(AND, "");
 		return str;
 	}
+
 	@SneakyThrows
 	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
-		String f = fs[fs.length - 1];
-		if (f.contains(AND)) {
-			fs[fs.length - 1] = f.replace(AND, "");
-			return getPredicate(fs, o, cb, root, fClass);
-		} else if (f.contains(NOT)) {
-//			not in,not like :not realize
-			fs[fs.length - 1] = f.replace(NOT, "");
-			Path finPath = getPath(root, null, fs, 0);
-			if (o == null) {
-				return cb.isNotNull(finPath);
-			}else {
-				o = getValue(fClass, o);
-				return cb.notEqual(finPath, o);
-			}
-		} else if (f.contains(LIKE)) {
-			fs[fs.length - 1] = f.replace(LIKE, "");
-			Path finPath = getPath(root, null, fs, 0);
-			return cb.like(finPath, o.toString());
-		} else {
-			Path finPath = getPath(root, null, fs, 0);
-			if (o instanceof ArrayList) {
-				o = getValue(fClass, o);
-				return finPath.in((ArrayList) o);
-			} else {
-				if (o == null) {
-					return cb.isNull(finPath);
-				} else {
-					String v = o.toString();
-					if (v.contains(LE)) {
-						o = getValue(fClass, v.replace(LE, ""));
-						return cb.lessThanOrEqualTo(finPath, (Comparable) o);
-					} else if (v.contains(GE)) {
-						o = getValue(fClass, v.replace(GE, ""));
-						return cb.greaterThanOrEqualTo(finPath, (Comparable) o);
-					} else if (v.contains(LT)) {
-						o = getValue(fClass, v.replace(LT, ""));
-						return cb.lessThan(finPath, (Comparable) o);
-					} else if (v.contains(GT)) {
-						o = getValue(fClass, v.replace(GT, ""));
-						return cb.greaterThan(finPath, (Comparable) o);
-					} else {
-						o = getValue(fClass, o);
-						return (Predicate) MatchType.EQ.getMethod().invoke(cb, finPath, o);
-					}
-				}
-			}
-		}
-	}
-
-
-	@SneakyThrows
-	public Predicate getPredicate1(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
 		String f = fs[fs.length - 1];
 		Path path = getPath(root, null, fs, 0);
 		o = getValue(fClass, o);
 		if (f.contains(AND)) {
 			fs[fs.length - 1] = f.replace(AND, "");
-			return getPredicate1(fs, o, cb, root, fClass);
+			return getPredicate(fs, o, cb, root, fClass);
 		} else if (f.contains(NOT)) {
 			if (o == null) {
 				return (Predicate) MatchType.IS_NOT_NULL.getMethod().invoke(cb, path);
