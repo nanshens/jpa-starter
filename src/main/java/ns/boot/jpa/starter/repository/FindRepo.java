@@ -2,7 +2,6 @@ package ns.boot.jpa.starter.repository;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
-import ns.boot.jpa.starter.enums.MatchType;
 import ns.boot.jpa.starter.utils.QueryUtils;
 import org.reflections.Reflections;
 import org.springframework.stereotype.Repository;
@@ -12,7 +11,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
@@ -99,10 +97,9 @@ public class FindRepo {
 
 //	************************ build Predicate *****************************
 
-			Predicate p= buildPredicate(fieldMap, cb, root, null, cfs);
-			if (p != null){
-				cq.where(p);
-			}
+			List<Predicate> predicates = buildPredicate(fieldMap, cb, root, null, cfs);
+			cq.where(predicates.toArray(new Predicate[predicates.size()]));
+//			cq.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
 //	************************ build sort and page *****************************
 
@@ -135,8 +132,7 @@ public class FindRepo {
 			result.add(resultList);
 		}
 		return result;
-//
-//
+
 //		Root<Object> root = cq.from(Object.class);
 //		root.alias("a");
 //		cq.multiselect(root.get("status").alias("status"));
@@ -145,9 +141,11 @@ public class FindRepo {
 //		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
 
-	public Predicate buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate, Map<String, Field> cfs) {
+	public List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate, Map<String, Field> cfs) {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
+
+		List<Predicate> predicateList = new ArrayList<>();
 
 		while (!fields.empty()) {
 			String field = fields.pop();
@@ -159,14 +157,15 @@ public class FindRepo {
 					fields.push(field + "." + o.toString());
 				}
 			} else {
-				Class c = cfs.get(clearChar(field)).getType();
-				predicate = predicate == null ?
-						getPredicate(fs, value, cb, root, c) :
-						cb.and(predicate, getPredicate(fs, value, cb, root, c));
+				value = getValue(cfs.get(clearChar(field)).getType(), value);
+//				predicate = predicate == null ?
+////						getPredicate(fs, value, cb, root) :
+////						cb.and(predicate, getPredicate(fs, value, cb, root));
+				predicateList.add(getPredicate(fs, value, cb, root));
 			}
 		}
 
-		return predicate;
+		return predicateList;
 	}
 
 	public Object getObject(Map objectMap, String[] fs, int i) {
@@ -189,40 +188,39 @@ public class FindRepo {
 	}
 
 	@SneakyThrows
-	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root, Class fClass) {
+	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
 		String f = fs[fs.length - 1];
 		Path path = getPath(root, null, fs, 0);
-		o = getValue(fClass, o);
 		if (f.contains(AND)) {
 			fs[fs.length - 1] = f.replace(AND, "");
-			return getPredicate(fs, o, cb, root, fClass);
+			return getPredicate(fs, o, cb, root);
 		} else if (f.contains(NOT)) {
 			if (o == null) {
-				return (Predicate) MatchType.IS_NOT_NULL.getMethod().invoke(cb, path);
+				return cb.isNotNull(path);
 			} else if (o instanceof ArrayList) {
-				return (Predicate) MatchType.NOT_IN.getMethod().invoke(cb, MatchType.IN.getMethod().invoke(path, o));
+				return path.in(o).not();
 			} else if (f.contains(LIKE)) {
-				return (Predicate) MatchType.NOT_LIKE.getMethod().invoke(cb, path, o);
+				return cb.notLike(path, (String) o);
 			} else {
-				return (Predicate) MatchType.NE.getMethod().invoke(cb, path, o);
+				return cb.notEqual(path, o);
 			}
 		} else if (o instanceof ArrayList) {
-			return (Predicate) MatchType.IN.getMethod().invoke(path, o);
+			return path.in(o);
 		} else if (f.contains(LIKE)) {
-			return (Predicate) MatchType.LIKE.getMethod().invoke(cb, path, o);
+			return cb.like(path, (String) o);
 		} else if (f.contains(LE)) {
-			return (Predicate) MatchType.LE.getMethod().invoke(cb, path, o);
+			return cb.lessThanOrEqualTo(path, (Comparable) o);
 		} else if (f.contains(GE)) {
-			return (Predicate) MatchType.GE.getMethod().invoke(cb, path, o);
+			return cb.greaterThanOrEqualTo(path, (Comparable) o);
 		} else if (f.contains(LT)) {
-			return (Predicate) MatchType.LT.getMethod().invoke(cb, path, o);
+			return cb.lessThan(path, (Comparable) o);
 		} else if (f.contains(GT)) {
-			return (Predicate) MatchType.GT.getMethod().invoke(cb, path, o);
+			return cb.greaterThan(path, (Comparable) o);
 		} else {
 			if (o == null) {
-				return (Predicate) MatchType.IS_NULL.getMethod().invoke(cb, path);
+				return cb.isNull(path);
 			}else {
-				return (Predicate) MatchType.EQ.getMethod().invoke(cb, path, o);
+				return cb.equal(path, o);
 			}
 		}
 	}
