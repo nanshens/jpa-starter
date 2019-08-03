@@ -29,7 +29,7 @@ import java.util.Map;
  * @author acer
  * @date 2018/7/30
  */
-public class Query<T> implements Specification<T> {
+public class JpaQuery<T> implements Specification<T> {
 
 	enum Condition {Or, And}
 
@@ -46,107 +46,107 @@ public class Query<T> implements Specification<T> {
 		initParseMap();
 	}
 
-	public Query<T> and(QueryFilter... queryFilters) {
+	public JpaQuery<T> and(QueryFilter... queryFilters) {
 		andFilters.addAll(Arrays.asList(queryFilters));
 		return this;
 	}
 
-	public Query<T> or(QueryFilter... queryFilters) {
+	public JpaQuery<T> or(QueryFilter... queryFilters) {
 		orFilters.addAll(Arrays.asList(queryFilters));
 		return this;
 	}
 
-	public Query<T> leftJoin(String tableName) {
+	public JpaQuery<T> leftJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftJoin(tableName));
 		return this;
 	}
 
-	public Query<T> leftListJoin(String tableName) {
+	public JpaQuery<T> leftListJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftListJoin(tableName));
 		return this;
 	}
 
-	public Query<T> leftSetJoin(String tableName) {
+	public JpaQuery<T> leftSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftSetJoin(tableName));
 		return this;
 	}
 
-	public Query<T> leftMapJoin(String tableName) {
+	public JpaQuery<T> leftMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftMapJoin(tableName));
 		return this;
 	}
 
-	public Query<T> rightJoin(String tableName) {
+	public JpaQuery<T> rightJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightJoin(tableName));
 		return this;
 	}
 
-	public Query<T> rightListJoin(String tableName) {
+	public JpaQuery<T> rightListJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightListJoin(tableName));
 		return this;
 	}
 
-	public Query<T> rightSetJoin(String tableName) {
+	public JpaQuery<T> rightSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightSetJoin(tableName));
 		return this;
 	}
 
-	public Query<T> rightMapJoin(String tableName) {
+	public JpaQuery<T> rightMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightMapJoin(tableName));
 		return this;
 	}
 
-	public Query<T> innerJoin(String tableName) {
+	public JpaQuery<T> innerJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerJoin(tableName));
 		return this;
 	}
 
-	public Query<T> innerListJoin(String tableName) {
+	public JpaQuery<T> innerListJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerListJoin(tableName));
 		return this;
 	}
 
-	public Query<T> innerSetJoin(String tableName) {
+	public JpaQuery<T> innerSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerSetJoin(tableName));
 		return this;
 	}
 
-	public Query<T> innerMapJoin(String tableName) {
+	public JpaQuery<T> innerMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerMapJoin(tableName));
 		return this;
 	}
 
-	public Query<T> order(QueryOrder... orders) {
+	public JpaQuery<T> order(QueryOrder... orders) {
 		queryOrders.addAll(Arrays.asList(orders));
 		return this;
 	}
 
-	public Query<T> clearAllFilters() {
+	public JpaQuery<T> clearAllFilters() {
 		clearAndFilters();
 		clearOrFilters();
 		return this;
 	}
 
-	public Query<T> clearAndFilters() {
+	public JpaQuery<T> clearAndFilters() {
 		andFilters.clear();
 		return this;
 	}
 
-	public Query<T> clearOrFilters() {
+	public JpaQuery<T> clearOrFilters() {
 		orFilters.clear();
 		return this;
 	}
 
-	public Query<T> clearOrders() {
+	public JpaQuery<T> clearOrders() {
 		queryOrders.clear();
 		return this;
 	}
 
-	public Query<T> addQueryInfo(Object o) {
+	public JpaQuery<T> addQueryInfo(Object o) {
 		return this;
 	}
 
-	public Query<T> removeFilters(String... names) {
+	public JpaQuery<T> removeFilters(String... names) {
 		for (String name : names) {
 			andFilters.removeIf(af -> af.getName().equals(name));
 			orFilters.removeIf(of -> of.getName().equals(name));
@@ -154,7 +154,7 @@ public class Query<T> implements Specification<T> {
 		return this;
 	}
 
-	public Query<T> rmAndFilter(String name, int index) {
+	public JpaQuery<T> rmAndFilter(String name, int index) {
 		List<Integer> ids = new ArrayList<>();
 		for (int i = 0; i < andFilters.size(); i++) {
 			if (andFilters.get(i).getName().equals(name)) {
@@ -165,7 +165,7 @@ public class Query<T> implements Specification<T> {
 		return this;
 	}
 
-	public Query<T> rmOrFilter(String name, int index) {
+	public JpaQuery<T> rmOrFilter(String name, int index) {
 		List<Integer> ids = new ArrayList<>();
 		for (int i = 0; i < orFilters.size(); i++) {
 			if (orFilters.get(i).getName().equals(name)) {
@@ -176,13 +176,13 @@ public class Query<T> implements Specification<T> {
 		return this;
 	}
 
-	private Query<T> removeNullFilters() {
+	private JpaQuery<T> removeNullFilters() {
 		andFilters.removeIf(af -> af.getName().equals(null) || af.getName().equals(""));
 		orFilters.removeIf(of -> of.getName().equals(null) || of.getName().equals(""));
 		return this;
 	}
 
-	public Query(Object object) {
+	public JpaQuery(Object object) {
 //		queryInfoObject = object;
 //		getPageInfo(object);
 //		buildQueryParams(object);
@@ -191,20 +191,20 @@ public class Query<T> implements Specification<T> {
 		queryInfo = QueryUtils.objectMap(object);
 	}
 
-	public Query() {
+	public JpaQuery() {
 	}
 
 	@SneakyThrows
 	private static void initParseMap() {
-		for (MatchType types : MatchType.getAllTypes()) {
-			if (types.getParamTypes().length == 0) {
-				parseMap.put(types, types.getTargetClass().getMethod(types.getCbName(), types.getPathClass()));
-			} else if (types.getParamTypes().length == 1) {
-				parseMap.put(types, CriteriaBuilder.class.getMethod(types.getCbName(), types.getPathClass(), types.getParamTypes()[0]));
-			} else if (types.getParamTypes().length == 2) {
-				parseMap.put(types, CriteriaBuilder.class.getMethod(types.getCbName(), types.getPathClass(), types.getParamTypes()[0], types.getParamTypes()[1]));
-			}
-		}
+//		for (MatchType types : MatchType.getAllTypes()) {
+//			if (types.getParamTypes().length == 0) {
+//				parseMap.put(types, types.getTargetClass().getMethod(types.getCbName(), types.getPathClass()));
+//			} else if (types.getParamTypes().length == 1) {
+//				parseMap.put(types, CriteriaBuilder.class.getMethod(types.getCbName(), types.getPathClass(), types.getParamTypes()[0]));
+//			} else if (types.getParamTypes().length == 2) {
+//				parseMap.put(types, CriteriaBuilder.class.getMethod(types.getCbName(), types.getPathClass(), types.getParamTypes()[0], types.getParamTypes()[1]));
+//			}
+//		}
 
 		for (JoinParams joinParams : JoinParams.getAllJoinParams()) {
 			parseJoinMap.put(joinParams, Root.class.getMethod(joinParams.getRootName(), String.class, JoinType.class));
@@ -275,22 +275,44 @@ public class Query<T> implements Specification<T> {
 	}
 
 	@SneakyThrows
-	public Predicate buildPredicate(MatchType matchType, QueryFilter queryFilter, Root<T> root, CriteriaBuilder cb) {
-		Method method = parseMap.get(matchType);
-		if (matchType.equals(MatchType.IN)) {
-			return (Predicate) method.invoke(buildPath(queryFilter.getName(), root), queryFilter.getValue());
-		} else if (matchType.equals(MatchType.BETWEEN)) {
-			return (Predicate) method.invoke(cb, buildPath(queryFilter.getName(), root), ((List) queryFilter.getValue()).get(0), ((List) queryFilter.getValue()).get(1));
-		} else if (matchType.equals(MatchType.IS_NOT_NULL) || matchType.equals(MatchType.IS_NULL)) {
-			return (Predicate) method.invoke(cb, buildPath(queryFilter.getName(), root));
-		} else {
-			return (Predicate) method.invoke(cb, buildPath(queryFilter.getName(), root), queryFilter.getValue());
+	public Predicate buildPredicate(QueryFilter queryFilter, Root<T> root, CriteriaBuilder cb) {
+		Path path = buildPath(queryFilter.getName(), root);
+		switch (queryFilter.getType()) {
+			case EQ:
+				return cb.equal(path, queryFilter.getName());
+			case NE:
+				return cb.notEqual(path, queryFilter.getName());
+			case GT:
+				return cb.greaterThan(path, (Comparable) queryFilter.getValue());
+			case GE:
+				return cb.greaterThanOrEqualTo(path, (Comparable) queryFilter.getValue());
+			case LT:
+				return cb.lessThan(path, (Comparable) queryFilter.getValue());
+			case LE:
+				return cb.lessThanOrEqualTo(path, (Comparable) queryFilter.getValue());
+			case BETWEEN:
+				List<Comparable> vs = (ArrayList) queryFilter.getValue();
+				return cb.between(path, vs.get(0), vs.get(1));
+			case LIKE:
+				return cb.like(path, (String) queryFilter.getValue());
+			case NOT_LIKE:
+				return cb.notLike(path, (String) queryFilter.getValue());
+			case IN:
+				return path.in(queryFilter.getValue());
+			case NOT_IN:
+				return cb.not(path.in(queryFilter.getValue()));
+			case IS_NULL:
+				return cb.isNull(path);
+			case IS_NOT_NULL:
+				return cb.isNotNull(path);
+			default:
+				return cb.equal(path, queryFilter.getName());
 		}
 	}
 
 	private Predicate parseFilters(List<QueryFilter> queryParams, CriteriaBuilder cb, Root<T> root, Predicate predicate, Enum type) {
 		for (QueryFilter queryFilter : queryParams) {
-			predicate = chooseOrAnd(predicate, buildPredicate(queryFilter.getType(), queryFilter, root, cb), cb, type);
+			predicate = chooseOrAnd(predicate, buildPredicate(queryFilter, root, cb), cb, type);
 		}
 		return predicate;
 	}
