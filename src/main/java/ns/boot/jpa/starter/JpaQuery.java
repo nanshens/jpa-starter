@@ -38,7 +38,6 @@ public class JpaQuery<T> implements Specification<T> {
 	private List<QueryJoin> joinFilters = new ArrayList<>();
 	private List<QueryOrder> queryOrders = new ArrayList<>();
 	private Map<String, Join> joinMap = new HashMap<>();
-	private static Map<Enum, Method> parseMap = new HashMap<>();
 	private static Map<Enum, Method> parseJoinMap = new HashMap<>();
 	private Map<String, Object> queryInfo;
 
@@ -196,15 +195,6 @@ public class JpaQuery<T> implements Specification<T> {
 
 	@SneakyThrows
 	private static void initParseMap() {
-//		for (MatchType types : MatchType.getAllTypes()) {
-//			if (types.getParamTypes().length == 0) {
-//				parseMap.put(types, types.getTargetClass().getMethod(types.getCbName(), types.getPathClass()));
-//			} else if (types.getParamTypes().length == 1) {
-//				parseMap.put(types, CriteriaBuilder.class.getMethod(types.getCbName(), types.getPathClass(), types.getParamTypes()[0]));
-//			} else if (types.getParamTypes().length == 2) {
-//				parseMap.put(types, CriteriaBuilder.class.getMethod(types.getCbName(), types.getPathClass(), types.getParamTypes()[0], types.getParamTypes()[1]));
-//			}
-//		}
 
 		for (JoinParams joinParams : JoinParams.getAllJoinParams()) {
 			parseJoinMap.put(joinParams, Root.class.getMethod(joinParams.getRootName(), String.class, JoinType.class));

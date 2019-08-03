@@ -86,7 +86,7 @@ public class FindRepo {
 //				"include": ["max(id):maxid"]
 //			},
 
-//	************************ build page sort *****************************
+//	************************ get page sort column *****************************
 			Map column = (Map) fieldMap.get("@column");
 			Map pageable = (Map) fieldMap.get("@page");
 			Map sort = (LinkedHashMap) fieldMap.get("@sort");
@@ -97,7 +97,7 @@ public class FindRepo {
 
 //	************************ build Predicate *****************************
 
-			List<Predicate> predicates = buildPredicate(fieldMap, cb, root, null, cfs);
+			List<Predicate> predicates = buildPredicate(fieldMap, cb, root, cfs);
 			cq.where(predicates.toArray(new Predicate[predicates.size()]));
 //			cq.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
@@ -107,12 +107,11 @@ public class FindRepo {
 				sort.forEach((k, v) -> {
 					String[] ks = k.toString().split("\\.");
 					if (v.toString().equals("desc")){
-						cq.orderBy(cb.desc(getPath(root, null, ks, 0)));
+						cq.orderBy(cb.desc(buildPath(root, null, ks, 0)));
 					}else {
-						cq.orderBy(cb.asc(getPath(root, null, ks, 0)));
+						cq.orderBy(cb.asc(buildPath(root, null, ks, 0)));
 					}
 				});
-
 			}
 
 			Query query = entityManager.createQuery(cq);
@@ -121,7 +120,7 @@ public class FindRepo {
 				int page = (int)pageable.get("page");
 				int limit = (int)pageable.get("limit");
 				query.setFirstResult((page - 1) * limit)
-				.setMaxResults(limit);
+						.setMaxResults(limit);
 			}
 
 //	************************ get result list *****************************
@@ -141,7 +140,7 @@ public class FindRepo {
 //		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
 
-	public List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Predicate predicate, Map<String, Field> cfs) {
+	public List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> cfs) {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
 
@@ -154,17 +153,13 @@ public class FindRepo {
 
 			if (value instanceof LinkedHashMap) {
 				for (Object o : ((Map) value).keySet()) {
-					fields.push(field + "." + o.toString());
+					fields.push( field + "." + o.toString());
 				}
 			} else {
-				value = getValue(cfs.get(clearChar(field)).getType(), value);
-//				predicate = predicate == null ?
-////						getPredicate(fs, value, cb, root) :
-////						cb.and(predicate, getPredicate(fs, value, cb, root));
-				predicateList.add(getPredicate(fs, value, cb, root));
+				value = buildValue(cfs.get(clearSpecChar(field)).getType(), value);
+				predicateList.add(selectPredicate(fs, value, cb, root));
 			}
 		}
-
 		return predicateList;
 	}
 
@@ -172,12 +167,12 @@ public class FindRepo {
 		return i < fs.length - 1 ? getObject((Map) objectMap.get(fs[i]), fs, i + 1) : objectMap.get(fs[i]);
 	}
 
-	public Path getPath(Root root, Path path, String[] fs, int i) {
-		fs[fs.length - 1] = clearChar(fs[fs.length - 1]);
-		return i < fs.length ? getPath(root, path == null ? root.get(fs[i]) : path.get(fs[i]), fs, i + 1) : path;
+	public Path buildPath(Root root, Path path, String[] fs, int i) {
+		fs[fs.length - 1] = clearSpecChar(fs[fs.length - 1]);
+		return i < fs.length ? buildPath(root, path == null ? root.get(fs[i]) : path.get(fs[i]), fs, i + 1) : path;
 	}
 
-	public String clearChar(String str) {
+	public String clearSpecChar(String str) {
 		str = str.replace(LT, "")
 				.replace(GT, "")
 				.replace(EQ, "")
@@ -188,12 +183,12 @@ public class FindRepo {
 	}
 
 	@SneakyThrows
-	public Predicate getPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
+	public Predicate selectPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
 		String f = fs[fs.length - 1];
-		Path path = getPath(root, null, fs, 0);
+		Path path = buildPath(root, null, fs, 0);
 		if (f.contains(AND)) {
 			fs[fs.length - 1] = f.replace(AND, "");
-			return getPredicate(fs, o, cb, root);
+			return selectPredicate(fs, o, cb, root);
 		} else if (f.contains(NOT)) {
 			if (o == null) {
 				return cb.isNotNull(path);
@@ -226,7 +221,7 @@ public class FindRepo {
 	}
 
 	@SneakyThrows
-	public Object getValue(Class fClass, Object o) {
+	public Object buildValue(Class fClass, Object o) {
 		if (fClass.isEnum()) {
 			if (o instanceof ArrayList) {
 				o = ((ArrayList<String>) o).stream().map(e -> Enum.valueOf(fClass, e)).collect(Collectors.toList());
