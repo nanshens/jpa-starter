@@ -47,31 +47,21 @@ public class FindUtils {
 	private final static String LE = "<=";
 	private final static String AND = "&";
 
-	public List find(JSONObject jso, String url, EntityManager entityManager) {
+	public List find(JSONObject queryJson, String url, EntityManager entityManager) {
 
 //	************************ get entity class ***************************
 
 		List result = new ArrayList();
-		Map jsoMap = jso.toJavaObject(Map.class);
+		Map queryJsonMap = queryJson.toJavaObject(Map.class);
+
+		Iterator it = queryJsonMap.keySet().iterator();
 
 		Map<String, Class<?>> targetCls = new HashMap<>(1);
-
-		Reflections reflections = new Reflections(url);
-		Set<Class<?>> classSet = reflections.getTypesAnnotatedWith(Entity.class);
-
-		for (Class<?> aClass : classSet) {
-			jso.forEach((k, v) -> {
-				if (aClass.getSimpleName().equals(k)){
-					targetCls.put(k, aClass);
-				}
-			});
-		}
-
-		Iterator it = jsoMap.keySet().iterator();
+		getTargetClass(url, targetCls, queryJson);
 
 		while (it.hasNext()) {
 			String entity = it.next().toString();
-			Map fieldMap = ((Map)jsoMap.get(entity));
+			Map fieldMap = ((Map)queryJsonMap.get(entity));
 			Map<String, Field> cfs = QueryUtils.getClassField(targetCls.get(entity));
 			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 
@@ -272,5 +262,19 @@ public class FindUtils {
 			o = format.parse(v);
 		}
 		return o;
+	}
+
+	private void getTargetClass(String url, Map<String, Class<?>> targetCls, JSONObject queryJson) {
+
+		Reflections reflections = new Reflections(url);
+		Set<Class<?>> classSet = reflections.getTypesAnnotatedWith(Entity.class);
+
+		for (Class<?> tClass : classSet) {
+			queryJson.forEach((k, v) -> {
+				if (tClass.getSimpleName().equals(k)){
+					targetCls.put(k, tClass);
+				}
+			});
+		}
 	}
 }

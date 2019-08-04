@@ -1,4 +1,4 @@
-package ns.boot.jpa.starter.Throwable;
+package ns.boot.jpa.starter.throwable;
 
 /**
  * @author ns

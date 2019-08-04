@@ -2,6 +2,7 @@ package ns.boot.jpa.starter.service;
 
 import com.alibaba.fastjson.JSONObject;
 import ns.boot.jpa.starter.property.JpaStarterProperties;
+import ns.boot.jpa.starter.result.Result;
 import ns.boot.jpa.starter.utils.FindUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,10 @@ public class FindService {
 	 * 4. format result json
 	 * 5. exception handle
 	 */
-	public List find(JSONObject jso) {
-		return new FindUtils().find(jso, properties.getBaseUrl(), entityManager);
+	public Result find(JSONObject queryJson) {
+		Result result = new Result();
+		result.setData(new FindUtils().find(queryJson, properties.getBaseUrl(), entityManager));
+		return result;
 	}
 
 }
