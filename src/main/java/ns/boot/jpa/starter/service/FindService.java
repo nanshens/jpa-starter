@@ -1,7 +1,9 @@
 package ns.boot.jpa.starter.service;
 
 import com.alibaba.fastjson.JSONObject;
-import ns.boot.jpa.starter.repository.FindRepo;
+import ns.boot.jpa.starter.property.JpaStarterProperties;
+import ns.boot.jpa.starter.utils.FindUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -13,9 +15,10 @@ import java.util.List;
 
 @Service
 public class FindService {
-
-	private FindRepo findRepo = new FindRepo();
-
+	@Autowired
+	private JpaStarterProperties properties;
+	@Autowired
+	private EntityManager entityManager;
 	/**
 	 *todo:
 	 * 1. parser json
@@ -24,8 +27,8 @@ public class FindService {
 	 * 4. format result json
 	 * 5. exception handle
 	 */
-	public List find(JSONObject jso, String baseUrl, EntityManager entityManager) {
-		return findRepo.find(jso, baseUrl, entityManager);
+	public List find(JSONObject jso) {
+		return new FindUtils().find(jso, properties.getBaseUrl(), entityManager);
 	}
 
 }
