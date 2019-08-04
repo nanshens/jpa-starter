@@ -1,6 +1,7 @@
 package ns.boot.jpa.starter.repository;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
 import lombok.SneakyThrows;
 import ns.boot.jpa.starter.utils.QueryUtils;
 import org.reflections.Reflections;
@@ -49,7 +50,8 @@ public class FindRepo {
 
 	public List find(JSONObject jso, String url, EntityManager entityManager) {
 
-//	************************ get entity class *****************************
+//	************************ get entity class ***************************
+
 		List result = new ArrayList();
 		Map jsoMap = jso.toJavaObject(Map.class);
 
@@ -86,7 +88,8 @@ public class FindRepo {
 //				"include": ["max(id):maxid"]
 //			},
 
-//	************************ get page sort column *****************************
+//	************************ get page sort column ************************
+
 			Map column = (Map) fieldMap.get("@column");
 			Map pageable = (Map) fieldMap.get("@page");
 			Map sort = (LinkedHashMap) fieldMap.get("@sort");
@@ -94,6 +97,12 @@ public class FindRepo {
 			fieldMap.remove("@page");
 			fieldMap.remove("@sort");
 			fieldMap.remove("@column");
+			List<String> include = new ArrayList<>();
+			List<String> exclude = new ArrayList<>();
+			if (column != null) {
+				include = column.get("include") == null ? include : (List<String>) column.get("include");
+				exclude = column.get("exclude") == null ? exclude : (List<String>) column.get("exclude");
+			}
 
 //	************************ build Predicate *****************************
 
@@ -101,7 +110,7 @@ public class FindRepo {
 			cq.where(predicates.toArray(new Predicate[predicates.size()]));
 //			cq.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
-//	************************ build sort and page *****************************
+//	************************ build sort and page *************************
 
 			if (sort != null) {
 				sort.forEach((k, v) -> {
@@ -127,7 +136,17 @@ public class FindRepo {
 
 			List<?> resultList = query.getResultList();
 
-//	************************ build json *****************************
+//	************************ build json **********************************
+
+			SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
+
+			include.forEach(i -> filter.getIncludes().add(i));
+			exclude.forEach(e -> filter.getExcludes().add(e));
+
+			resultList = resultList
+					.stream()
+					.map(r -> JSONObject.parse(JSONObject.toJSONString(r, filter))).collect(Collectors.toList());
+
 			result.add(resultList);
 		}
 		return result;

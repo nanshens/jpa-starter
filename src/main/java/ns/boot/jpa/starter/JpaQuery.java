@@ -38,12 +38,12 @@ public class JpaQuery<T> implements Specification<T> {
 	private List<QueryJoin> joinFilters = new ArrayList<>();
 	private List<QueryOrder> queryOrders = new ArrayList<>();
 	private Map<String, Join> joinMap = new HashMap<>();
-	private static Map<Enum, Method> parseJoinMap = new HashMap<>();
+//	private static Map<Enum, Method> parseJoinMap = new HashMap<>();
 	private Map<String, Object> queryInfo;
 
-	static {
-		initParseMap();
-	}
+//	static {
+//		initParseMap();
+//	}
 
 	public JpaQuery<T> and(QueryFilter... queryFilters) {
 		andFilters.addAll(Arrays.asList(queryFilters));
@@ -193,13 +193,13 @@ public class JpaQuery<T> implements Specification<T> {
 	public JpaQuery() {
 	}
 
-	@SneakyThrows
-	private static void initParseMap() {
-
-		for (JoinParams joinParams : JoinParams.getAllJoinParams()) {
-			parseJoinMap.put(joinParams, Root.class.getMethod(joinParams.getRootName(), String.class, JoinType.class));
-		}
-	}
+//	@SneakyThrows
+//	private static void initParseMap() {
+//
+//		for (JoinParams joinParams : JoinParams.getAllJoinParams()) {
+//			parseJoinMap.put(joinParams, Root.class.getMethod(joinParams.getRootName(), String.class, JoinType.class));
+//		}
+//	}
 
 	@Override
 	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
@@ -232,12 +232,12 @@ public class JpaQuery<T> implements Specification<T> {
 						cb.or(basicPredicate, newPredicate);
 	}
 
-	@SneakyThrows
-	private void addJoin(List<QueryJoin> queryJoins, Root<T> root) {
-		for (QueryJoin queryJoin : queryJoins) {
-			joinMap.put(queryJoin.getTable(), (Join) parseJoinMap.get(queryJoin.getJoinParams()).invoke(root, queryJoin.getTable(), queryJoin.getJoinType()));
-		}
-	}
+//	@SneakyThrows
+//	private void addJoin(List<QueryJoin> queryJoins, Root<T> root) {
+//		for (QueryJoin queryJoin : queryJoins) {
+//			joinMap.put(queryJoin.getTable(), (Join) parseJoinMap.get(queryJoin.getJoinParams()).invoke(root, queryJoin.getTable(), queryJoin.getJoinType()));
+//		}
+//	}
 
 	private Path buildPath(String paramsName, Root<T> root) {
 		String[] params = paramsName.split("\\.");
