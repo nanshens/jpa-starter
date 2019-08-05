@@ -47,29 +47,38 @@ public class FindUtils {
 	private final static String LE = "<=";
 	private final static String AND = "&";
 
-	public List find(JSONObject queryJson, String url, EntityManager entityManager) {
+	public JSONObject find(JSONObject queryJson, String url, EntityManager entityManager) {
 
 //	************************ get entity class ***************************
 
-		List result = new ArrayList();
-		Map queryJsonMap = queryJson.toJavaObject(Map.class);
-
-		Iterator it = queryJsonMap.keySet().iterator();
+		JSONObject result = new JSONObject();
+		Map<String, Map> queryJsonMap = queryJson.toJavaObject(Map.class);
 
 		Map<String, Class<?>> targetCls = new HashMap<>(1);
 		getTargetClass(url, targetCls, queryJson);
 
-		while (it.hasNext()) {
-			String entity = it.next().toString();
-			Map fieldMap = ((Map)queryJsonMap.get(entity));
-			Map<String, Field> cfs = QueryUtils.getClassField(targetCls.get(entity));
-			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+//	************************ foreach entity ****************************
 
-			CriteriaQuery<?> cq = cb.createQuery(targetCls.get(entity));
-			Root<?> root = cq.from(targetCls.get(entity));
+		queryJsonMap.forEach((qName, qInfo) -> {
+
+			Class<?> entityClass = targetCls.get(qName);
+			Map<String, Field> queryFields = QueryUtils.getClassField(entityClass);
+
+			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+			CriteriaQuery<?> cq = cb.createQuery(entityClass);
+			Root root = cq.from(entityClass);
+
 //			tuple query
 //			CriteriaQuery<?> cq = cb.createTupleQuery();
 //			cq.multiselect(root.get("code"), root.get("name"));
+
+//		Root<Object> root = cq.from(Object.class);
+//		root.alias("a");
+//		cq.multiselect(root.get("status").alias("status"));
+//		Predicate where = cb.conjunction();
+//		cq.where(where).groupBy(root.get("status"));
+//		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
+
 
 //			get  column
 //			"@column": {
@@ -79,76 +88,54 @@ public class FindUtils {
 
 //	************************ get page sort column ************************
 
-			Map column = (Map) fieldMap.get("@column");
-			Map pageable = (Map) fieldMap.get("@page");
-			Map sort = (LinkedHashMap) fieldMap.get("@sort");
+			Map<String, List<String>> column = (Map) qInfo.get("@column");
+			Map<String, Integer> pageable = (Map) qInfo.get("@page");
+			Map<String, String> sort = (LinkedHashMap) qInfo.get("@sort");
 
-			fieldMap.remove("@page");
-			fieldMap.remove("@sort");
-			fieldMap.remove("@column");
-			List<String> include = new ArrayList<>();
-			List<String> exclude = new ArrayList<>();
-			if (column != null) {
-				include = column.get("include") == null ? include : (List<String>) column.get("include");
-				exclude = column.get("exclude") == null ? exclude : (List<String>) column.get("exclude");
-			}
+			qInfo.remove("@page");
+			qInfo.remove("@sort");
+			qInfo.remove("@column");
 
 //	************************ build Predicate *****************************
 
-			List<Predicate> predicates = buildPredicate(fieldMap, cb, root, cfs);
+			List<Predicate> predicates = buildPredicate(qInfo, cb, root, queryFields);
 			cq.where(predicates.toArray(new Predicate[predicates.size()]));
 //			cq.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
-//	************************ build sort and page *************************
-
+//	************** create query, build sort and page *********************
 			if (sort != null) {
-				sort.forEach((k, v) -> {
-					String[] ks = k.toString().split("\\.");
-					if (v.toString().equals("desc")){
-						cq.orderBy(cb.desc(buildPath(root, null, ks, 0)));
-					}else {
-						cq.orderBy(cb.asc(buildPath(root, null, ks, 0)));
-					}
-				});
+				buildSort(sort, cq, cb, root);
 			}
 
 			Query query = entityManager.createQuery(cq);
 
 			if (pageable != null) {
-				int page = (int)pageable.get("page");
-				int limit = (int)pageable.get("limit");
-				query.setFirstResult((page - 1) * limit)
-						.setMaxResults(limit);
+				buildPage(query, pageable.get("page"), pageable.get("limit"));
 			}
 
 //	************************ get result list *****************************
 
 			List<?> resultList = query.getResultList();
 
-//	************************ build json **********************************
+//	************************ build json by column ************************
 
 			SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
 
-			include.forEach(i -> filter.getIncludes().add(i));
-			exclude.forEach(e -> filter.getExcludes().add(e));
+			if (column != null) {
+				buildJsonFilter(filter, column);
+			}
 
 			resultList = resultList
 					.stream()
-					.map(r -> JSONObject.parse(JSONObject.toJSONString(r, filter))).collect(Collectors.toList());
+					.map(r -> JSONObject.parse(JSONObject.toJSONString(r, filter)))
+					.collect(Collectors.toList());
 
-			result.add(resultList);
-		}
+			result.put(qName, resultList);
+		});
 		return result;
-
-//		Root<Object> root = cq.from(Object.class);
-//		root.alias("a");
-//		cq.multiselect(root.get("status").alias("status"));
-//		Predicate where = cb.conjunction();
-//		cq.where(where).groupBy(root.get("status"));
-//		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
 	}
 
-	private List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> cfs) {
+	private List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
 
@@ -164,7 +151,7 @@ public class FindUtils {
 					fields.push( field + "." + o.toString());
 				}
 			} else {
-				value = buildValue(cfs.get(clearSpecChar(field)).getType(), value);
+				value = buildValue(queryFields.get(clearSpecChar(field)).getType(), value);
 				predicateList.add(selectPredicate(fs, value, cb, root));
 			}
 		}
@@ -275,6 +262,31 @@ public class FindUtils {
 					targetCls.put(k, tClass);
 				}
 			});
+		}
+	}
+
+	private void buildSort(Map<String, String> sort, CriteriaQuery cq, CriteriaBuilder cb, Root root) {
+		sort.forEach((name, direction) -> {
+			String[] names = name.split("\\.");
+			if (direction.equals("desc")) {
+				cq.orderBy(cb.desc(buildPath(root, null, names, 0)));
+			} else {
+				cq.orderBy(cb.asc(buildPath(root, null, names, 0)));
+			}
+		});
+	}
+
+	private void buildPage(Query query, int page, int limit) {
+		query.setFirstResult((page - 1) * limit)
+				.setMaxResults(limit);
+	}
+
+	private void buildJsonFilter(SimplePropertyPreFilter filter, Map<String, List<String>> column) {
+		if (column.get("include") != null) {
+			column.get("include").forEach(i -> filter.getIncludes().add(i));
+		}
+		if (column.get("exclude") != null) {
+			column.get("exclude").forEach(e -> filter.getExcludes().add(e));
 		}
 	}
 }

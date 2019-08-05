@@ -30,7 +30,10 @@ public class FindService {
 	 */
 	public Result find(JSONObject queryJson) {
 		Result result = new Result();
+		long s = System.currentTimeMillis();
 		result.setData(new FindUtils().find(queryJson, properties.getBaseUrl(), entityManager));
+		long e = System.currentTimeMillis();
+		result.setMsg(e-s + "");
 		return result;
 	}
 
