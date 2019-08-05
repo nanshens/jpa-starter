@@ -3,9 +3,8 @@ package ns.boot.jpa.starter.utils;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
 import lombok.SneakyThrows;
-import ns.boot.jpa.starter.utils.QueryUtils;
+import ns.boot.jpa.starter.exception.JpaException;
 import org.reflections.Reflections;
-import org.springframework.stereotype.Repository;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
@@ -17,14 +16,15 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +58,10 @@ public class FindUtils {
 		getTargetClass(url, targetCls, queryJson);
 
 //	************************ foreach entity ****************************
+		if (targetCls.size() == 0) {
+			result.put("info", "实体类名有误");
+			return result;
+		}
 
 		queryJsonMap.forEach((qName, qInfo) -> {
 
@@ -98,8 +102,14 @@ public class FindUtils {
 
 //	************************ build Predicate *****************************
 
-			List<Predicate> predicates = buildPredicate(qInfo, cb, root, queryFields);
-			cq.where(predicates.toArray(new Predicate[predicates.size()]));
+			try {
+				List<Predicate> predicates = buildPredicate(qInfo, cb, root, queryFields, result);
+				cq.where(predicates.toArray(new Predicate[predicates.size()]));
+			}catch (JpaException e) {
+				result.put("info", e.getMessage());
+				return;
+			}
+
 //			cq.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
 //	************** create query, build sort and page *********************
@@ -132,10 +142,11 @@ public class FindUtils {
 
 			result.put(qName, resultList);
 		});
+
 		return result;
 	}
 
-	private List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) {
+	private List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields, JSONObject result) {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
 
@@ -151,7 +162,15 @@ public class FindUtils {
 					fields.push( field + "." + o.toString());
 				}
 			} else {
-				value = buildValue(queryFields.get(clearSpecChar(field)).getType(), value);
+				try {
+					value = buildValue(queryFields.get(clearSpecChar(field)).getType(), value);
+				} catch (NullPointerException e) {
+					throw new JpaException(field + " 属性名有误");
+				} catch (IllegalArgumentException e) {
+					throw new JpaException(field + " 属性值有误");
+				} catch (ParseException | DateTimeException e) {
+					throw new JpaException(field + " 时间解析错误");
+				}
 				predicateList.add(selectPredicate(fs, value, cb, root));
 			}
 		}
@@ -177,7 +196,6 @@ public class FindUtils {
 		return str;
 	}
 
-	@SneakyThrows
 	private Predicate selectPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
 		String f = fs[fs.length - 1];
 		Path path = buildPath(root, null, fs, 0);
@@ -215,8 +233,7 @@ public class FindUtils {
 		}
 	}
 
-	@SneakyThrows
-	private Object buildValue(Class fClass, Object o) {
+	private Object buildValue(Class fClass, Object o) throws ParseException {
 		if (fClass.isEnum()) {
 			if (o instanceof ArrayList) {
 				o = ((ArrayList<String>) o).stream().map(e -> Enum.valueOf(fClass, e)).collect(Collectors.toList());
