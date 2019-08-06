@@ -3,6 +3,7 @@ package ns.boot.jpa.starter.utils;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
 import lombok.SneakyThrows;
+import ns.boot.jpa.starter.enums.ExceptionEnum;
 import ns.boot.jpa.starter.exception.JpaException;
 import org.reflections.Reflections;
 
@@ -59,7 +60,7 @@ public class FindUtils {
 
 //	************************ foreach entity ****************************
 		if (targetCls.size() == 0) {
-			result.put("info", "实体类名有误");
+			result.put("info", ExceptionEnum.ENTITY_ERROR.getMsg());
 			return result;
 		}
 
@@ -165,11 +166,9 @@ public class FindUtils {
 				try {
 					value = buildValue(queryFields.get(clearSpecChar(field)).getType(), value);
 				} catch (NullPointerException e) {
-					throw new JpaException(field + " 属性名有误");
-				} catch (IllegalArgumentException e) {
-					throw new JpaException(field + " 属性值有误");
-				} catch (ParseException | DateTimeException e) {
-					throw new JpaException(field + " 时间解析错误");
+					throw new JpaException(ExceptionEnum.NAME_ERROR.getMsg() + field);
+				} catch (IllegalArgumentException | ParseException | DateTimeException e) {
+					throw new JpaException(ExceptionEnum.VALUE_ERROR.getMsg() + field);
 				}
 				predicateList.add(selectPredicate(fs, value, cb, root));
 			}
