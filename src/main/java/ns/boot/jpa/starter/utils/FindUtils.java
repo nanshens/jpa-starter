@@ -7,7 +7,6 @@ import ns.boot.jpa.starter.exception.JpaException;
 import org.reflections.Reflections;
 
 import javax.persistence.Entity;
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -24,7 +23,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,107 +45,7 @@ public class FindUtils {
 	private final static String LE = "<=";
 	private final static String AND = "&";
 
-	public JSONObject find(JSONObject queryJson, String url, EntityManager entityManager) throws JpaException{
-
-//	************************ get entity class ***************************
-
-		JSONObject result = new JSONObject();
-		Map<String, Map> queryJsonMap = queryJson.toJavaObject(Map.class);
-
-		Map<String, Class<?>> targetCls = new HashMap<>(1);
-		getTargetClass(url, targetCls, queryJson);
-
-//	************************ foreach entity ****************************
-		if (targetCls.size() == 0) {
-			throw new JpaException(ExceptionEnum.ENTITY_ERROR.getMsg());
-		}
-
-		queryJsonMap.forEach((qName, qInfo) -> {
-
-			Class<?> entityClass = targetCls.get(qName);
-			Map<String, Field> queryFields = QueryUtils.getClassField(entityClass);
-
-			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-			CriteriaQuery<?> cq = cb.createQuery(entityClass);
-			Root root = cq.from(entityClass);
-
-//			tuple query
-//			CriteriaQuery<?> cq = cb.createTupleQuery();
-//			cq.multiselect(root.get("code"), root.get("name"));
-
-//		Root<Object> root = cq.from(Object.class);
-//		root.alias("a");
-//		cq.multiselect(root.get("status").alias("status"));
-//		Predicate where = cb.conjunction();
-//		cq.where(where).groupBy(root.get("status"));
-//		List<Tuple> tuples = entityManager.createQuery(cq).getResultList();
-
-
-//			get  column
-//			"@column": {
-//				"except": [],
-//				"include": ["max(id):maxid"]
-//			},
-
-//	************************ get page sort column ************************
-
-			Map<String, List<String>> column = (Map) qInfo.get("@column");
-			Map<String, Integer> pageable = (Map) qInfo.get("@page");
-			Map<String, String> sort = (LinkedHashMap) qInfo.get("@sort");
-
-			qInfo.remove("@page");
-			qInfo.remove("@sort");
-			qInfo.remove("@column");
-
-//	************************ build Predicate *****************************
-
-			List<Predicate> predicates = buildPredicate(qInfo, cb, root, queryFields);
-			cq.where(predicates.toArray(new Predicate[predicates.size()]));
-
-//			cq.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
-
-//	************** create query, build sort and page *********************
-			try {
-
-				if (sort != null) {
-					buildSort(sort, cq, cb, root);
-				}
-
-				Query query = entityManager.createQuery(cq);
-
-				if (pageable != null) {
-					buildPage(query, pageable.get("page"), pageable.get("limit"));
-				}
-
-//	************************ get result list *****************************
-
-				List<?> resultList = query.getResultList();
-
-//	************************ build json by column ************************
-
-				SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
-
-				if (column != null) {
-					buildJsonFilter(filter, column);
-				}
-
-				resultList = resultList
-						.stream()
-						.map(r -> JSONObject.parse(JSONObject.toJSONString(r, filter)))
-						.collect(Collectors.toList());
-
-				result.put(qName, resultList);
-			}catch (JpaException e) {
-				throw e;
-			} catch (Exception e) {
-				throw new JpaException(ExceptionEnum.VALUE_ERROR.getMsg());
-			}
-		});
-
-		return result;
-	}
-
-	private List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) throws JpaException {
+	public static List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) throws JpaException {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
 
@@ -176,26 +74,55 @@ public class FindUtils {
 		return predicateList;
 	}
 
-	private Object getObject(Map objectMap, String[] fs, int i) {
-		return i < fs.length - 1 ? getObject((Map) objectMap.get(fs[i]), fs, i + 1) : objectMap.get(fs[i]);
+	public static void getTargetClass(String url, Map<String, Class<?>> targetCls, JSONObject queryJson) {
+
+		Reflections reflections = new Reflections(url);
+		Set<Class<?>> classSet = reflections.getTypesAnnotatedWith(Entity.class);
+
+		for (Class<?> tClass : classSet) {
+			queryJson.forEach((k, v) -> {
+				if (tClass.getSimpleName().equals(k)){
+					targetCls.put(k, tClass);
+				}
+			});
+		}
 	}
 
-	private Path buildPath(Root root, Path path, String[] fs, int i) {
-		fs[fs.length - 1] = clearSpecChar(fs[fs.length - 1]);
-		return i < fs.length ? buildPath(root, path == null ? root.get(fs[i]) : path.get(fs[i]), fs, i + 1) : path;
+	public static void buildSort(Map<String, String> sort, CriteriaQuery cq, CriteriaBuilder cb, Root root) throws JpaException{
+		sort.forEach((name, direction) -> {
+			String[] names = name.split("\\.");
+			try {
+				if (direction.equals("desc")) {
+					cq.orderBy(cb.desc(buildPath(root, null, names, 0)));
+				} else if (direction.equals("asc")) {
+					cq.orderBy(cb.asc(buildPath(root, null, names, 0)));
+				} else {
+					throw new JpaException(ExceptionEnum.SORT_ERROR.getMsg() + name);
+				}
+			} catch (IllegalArgumentException e) {
+				throw new JpaException(ExceptionEnum.SORT_ERROR.getMsg() + name);
+			}
+		});
 	}
 
-	private String clearSpecChar(String str) {
-		str = str.replace(LT, "")
-				.replace(GT, "")
-				.replace(EQ, "")
-				.replace(LIKE, "")
-				.replace(NOT, "")
-				.replace(AND, "");
-		return str;
+	public static void buildPage(Query query, Integer page, Integer limit) throws JpaException{
+		if (page == null || limit == null){
+			throw new JpaException(ExceptionEnum.PAGE_ERROR.getMsg());
+		}
+		query.setFirstResult((page - 1) * limit)
+				.setMaxResults(limit);
 	}
 
-	private Predicate selectPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
+	public static void buildJsonFilter(SimplePropertyPreFilter filter, Map<String, List<String>> column) {
+		if (column.get("include") != null) {
+			column.get("include").forEach(i -> filter.getIncludes().add(i));
+		}
+		if (column.get("exclude") != null) {
+			column.get("exclude").forEach(e -> filter.getExcludes().add(e));
+		}
+	}
+
+	private static Predicate selectPredicate(String[] fs, Object o, CriteriaBuilder cb, Root<?> root) {
 		String f = fs[fs.length - 1];
 		Path path = buildPath(root, null, fs, 0);
 		if (f.contains(AND)) {
@@ -232,7 +159,17 @@ public class FindUtils {
 		}
 	}
 
-	private Object buildValue(Class fClass, Object o) throws ParseException {
+	private static String clearSpecChar(String str) {
+		str = str.replace(LT, "")
+				.replace(GT, "")
+				.replace(EQ, "")
+				.replace(LIKE, "")
+				.replace(NOT, "")
+				.replace(AND, "");
+		return str;
+	}
+
+	private static Object buildValue(Class fClass, Object o) throws ParseException {
 		if (fClass.isEnum()) {
 			if (o instanceof ArrayList) {
 				o = ((ArrayList<String>) o).stream().map(e -> Enum.valueOf(fClass, e)).collect(Collectors.toList());
@@ -267,52 +204,12 @@ public class FindUtils {
 		return o;
 	}
 
-	private void getTargetClass(String url, Map<String, Class<?>> targetCls, JSONObject queryJson) {
-
-		Reflections reflections = new Reflections(url);
-		Set<Class<?>> classSet = reflections.getTypesAnnotatedWith(Entity.class);
-
-		for (Class<?> tClass : classSet) {
-			queryJson.forEach((k, v) -> {
-				if (tClass.getSimpleName().equals(k)){
-					targetCls.put(k, tClass);
-				}
-			});
-		}
+	private static Object getObject(Map objectMap, String[] fs, int i) {
+		return i < fs.length - 1 ? getObject((Map) objectMap.get(fs[i]), fs, i + 1) : objectMap.get(fs[i]);
 	}
 
-	private void buildSort(Map<String, String> sort, CriteriaQuery cq, CriteriaBuilder cb, Root root) throws JpaException{
-		sort.forEach((name, direction) -> {
-			String[] names = name.split("\\.");
-			try {
-				if (direction.equals("desc")) {
-					cq.orderBy(cb.desc(buildPath(root, null, names, 0)));
-				} else if (direction.equals("asc")) {
-					cq.orderBy(cb.asc(buildPath(root, null, names, 0)));
-				} else {
-					throw new JpaException(ExceptionEnum.SORT_ERROR.getMsg() + name);
-				}
-			} catch (IllegalArgumentException e) {
-				throw new JpaException(ExceptionEnum.SORT_ERROR.getMsg() + name);
-			}
-
-		});
-	}
-
-	private void buildPage(Query query, Integer page, Integer limit) throws JpaException{
-		if (page == null || limit == null){
-			throw new JpaException(ExceptionEnum.PAGE_ERROR.getMsg());
-		}
-		query.setFirstResult((page - 1) * limit)
-				.setMaxResults(limit);
-	}
-
-	private void buildJsonFilter(SimplePropertyPreFilter filter, Map<String, List<String>> column) {
-		if (column.get("include") != null) {
-			column.get("include").forEach(i -> filter.getIncludes().add(i));
-		}
-		if (column.get("exclude") != null) {
-			column.get("exclude").forEach(e -> filter.getExcludes().add(e));
-		}
+	private static Path buildPath(Root root, Path path, String[] fs, int i) {
+		fs[fs.length - 1] = FindUtils.clearSpecChar(fs[fs.length - 1]);
+		return i < fs.length ? buildPath(root, path == null ? root.get(fs[i]) : path.get(fs[i]), fs, i + 1) : path;
 	}
 }
