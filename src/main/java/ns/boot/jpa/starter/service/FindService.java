@@ -1,6 +1,7 @@
 package ns.boot.jpa.starter.service;
 
 import com.alibaba.fastjson.JSONObject;
+import ns.boot.jpa.starter.exception.JpaException;
 import ns.boot.jpa.starter.property.JpaStarterProperties;
 import ns.boot.jpa.starter.result.Result;
 import ns.boot.jpa.starter.utils.FindUtils;
@@ -31,7 +32,14 @@ public class FindService {
 	public Result find(JSONObject queryJson) {
 		Result result = new Result();
 		long s = System.currentTimeMillis();
-		result.setData(new FindUtils().find(queryJson, properties.getBaseUrl(), entityManager));
+		JSONObject resultJson;
+		try {
+			resultJson = new FindUtils().find(queryJson, properties.getBaseUrl(), entityManager);
+			result.setData(resultJson);
+		} catch (JpaException e) {
+			result.setData(e.getMessage());
+		}
+
 		long e = System.currentTimeMillis();
 		result.setMsg(e-s + "");
 		return result;

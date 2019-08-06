@@ -2,7 +2,6 @@ package ns.boot.jpa.starter.utils;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
-import lombok.SneakyThrows;
 import ns.boot.jpa.starter.enums.ExceptionEnum;
 import ns.boot.jpa.starter.exception.JpaException;
 import org.reflections.Reflections;
@@ -48,7 +47,7 @@ public class FindUtils {
 	private final static String LE = "<=";
 	private final static String AND = "&";
 
-	public JSONObject find(JSONObject queryJson, String url, EntityManager entityManager) {
+	public JSONObject find(JSONObject queryJson, String url, EntityManager entityManager) throws JpaException{
 
 //	************************ get entity class ***************************
 
@@ -60,8 +59,7 @@ public class FindUtils {
 
 //	************************ foreach entity ****************************
 		if (targetCls.size() == 0) {
-			result.put("info", ExceptionEnum.ENTITY_ERROR.getMsg());
-			return result;
+			throw new JpaException(ExceptionEnum.ENTITY_ERROR.getMsg());
 		}
 
 		queryJsonMap.forEach((qName, qInfo) -> {
@@ -103,51 +101,53 @@ public class FindUtils {
 
 //	************************ build Predicate *****************************
 
-			try {
-				List<Predicate> predicates = buildPredicate(qInfo, cb, root, queryFields, result);
-				cq.where(predicates.toArray(new Predicate[predicates.size()]));
-			}catch (JpaException e) {
-				result.put("info", e.getMessage());
-				return;
-			}
+			List<Predicate> predicates = buildPredicate(qInfo, cb, root, queryFields);
+			cq.where(predicates.toArray(new Predicate[predicates.size()]));
 
 //			cq.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
 //	************** create query, build sort and page *********************
-			if (sort != null) {
-				buildSort(sort, cq, cb, root);
-			}
+			try {
 
-			Query query = entityManager.createQuery(cq);
+				if (sort != null) {
+					buildSort(sort, cq, cb, root);
+				}
 
-			if (pageable != null) {
-				buildPage(query, pageable.get("page"), pageable.get("limit"));
-			}
+				Query query = entityManager.createQuery(cq);
+
+				if (pageable != null) {
+					buildPage(query, pageable.get("page"), pageable.get("limit"));
+				}
 
 //	************************ get result list *****************************
 
-			List<?> resultList = query.getResultList();
+				List<?> resultList = query.getResultList();
 
 //	************************ build json by column ************************
 
-			SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
+				SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
 
-			if (column != null) {
-				buildJsonFilter(filter, column);
+				if (column != null) {
+					buildJsonFilter(filter, column);
+				}
+
+				resultList = resultList
+						.stream()
+						.map(r -> JSONObject.parse(JSONObject.toJSONString(r, filter)))
+						.collect(Collectors.toList());
+
+				result.put(qName, resultList);
+			}catch (JpaException e) {
+				throw e;
+			} catch (Exception e) {
+				throw new JpaException(ExceptionEnum.VALUE_ERROR.getMsg());
 			}
-
-			resultList = resultList
-					.stream()
-					.map(r -> JSONObject.parse(JSONObject.toJSONString(r, filter)))
-					.collect(Collectors.toList());
-
-			result.put(qName, resultList);
 		});
 
 		return result;
 	}
 
-	private List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields, JSONObject result) {
+	private List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) throws JpaException {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
 
@@ -281,18 +281,28 @@ public class FindUtils {
 		}
 	}
 
-	private void buildSort(Map<String, String> sort, CriteriaQuery cq, CriteriaBuilder cb, Root root) {
+	private void buildSort(Map<String, String> sort, CriteriaQuery cq, CriteriaBuilder cb, Root root) throws JpaException{
 		sort.forEach((name, direction) -> {
 			String[] names = name.split("\\.");
-			if (direction.equals("desc")) {
-				cq.orderBy(cb.desc(buildPath(root, null, names, 0)));
-			} else {
-				cq.orderBy(cb.asc(buildPath(root, null, names, 0)));
+			try {
+				if (direction.equals("desc")) {
+					cq.orderBy(cb.desc(buildPath(root, null, names, 0)));
+				} else if (direction.equals("asc")) {
+					cq.orderBy(cb.asc(buildPath(root, null, names, 0)));
+				} else {
+					throw new JpaException(ExceptionEnum.SORT_ERROR.getMsg() + name);
+				}
+			} catch (IllegalArgumentException e) {
+				throw new JpaException(ExceptionEnum.SORT_ERROR.getMsg() + name);
 			}
+
 		});
 	}
 
-	private void buildPage(Query query, int page, int limit) {
+	private void buildPage(Query query, Integer page, Integer limit) throws JpaException{
+		if (page == null || limit == null){
+			throw new JpaException(ExceptionEnum.PAGE_ERROR.getMsg());
+		}
 		query.setFirstResult((page - 1) * limit)
 				.setMaxResults(limit);
 	}
