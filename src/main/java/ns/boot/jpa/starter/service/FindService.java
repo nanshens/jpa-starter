@@ -57,13 +57,12 @@ public class FindService {
 
 //	************************ build result ***************
 			buildResult(queryJsonMap, targetCls, resultJson);
-			result.setData(resultJson);
+			result.successResult(resultJson);
 		} catch (JpaException e) {
-			result.setData(e.getMessage());
+			result.failResult(e.getMessage());
 		}
-
 		long e = System.currentTimeMillis();
-		result.setMsg(e-s + "");
+		System.out.println(e-s);
 		return result;
 	}
 

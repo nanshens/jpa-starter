@@ -2,11 +2,12 @@ jpa add json parser
 
 todo:
 
-1. url config
-2. json parser
-3. jpa entitymanager
-4, enums and localdate localtime
-
+1. url config(delete)
+2. json parser(pass)
+3. jpa entitymanager(pass)
+4. enums and localdate localtime(pass)
+5. n + 1 problem
+6. select groupby having ...
 example
 
 group by
@@ -51,11 +52,11 @@ response json
 
 {
     "data": {
-        "f1": "12"
+        "Entity": {
+            "f1": "value"
+        }
     },
-    "code": 200,
-    "msg": "1231312"
-
+    "msg": "SUCCESS OR FAIL"
 }
 
 update:
