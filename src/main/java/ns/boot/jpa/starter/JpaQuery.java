@@ -211,17 +211,29 @@ public class JpaQuery<T> implements Specification<T> {
 //		criteriaQuery.multiselect(root.get("status"));
 //		criteriaQuery.groupBy(root.get("status"));
 
+
+//		1.select * from customer
+//		where code > '3' or name='2' or address_id ='1';
+//
+//		2.select * from customer
+//		where code > '3' and name='2' and address_id ='1';
+//
+//		3.select * from customer
+//		where code > '3' or (name='2' and address_id ='1');
+//
+//		4.select * from customer
+//		where code < '4' and (name='2' or address_id ='1');
+
 		buildSort(root, criteriaQuery, criteriaBuilder);
-		if (andFilters.size() != 0 && orFilters.size() == 0) {
+		if (andFilters.size() > 0 && orFilters.size() == 0) {
 			return parseFilters(andFilters, criteriaBuilder, root, predicate, Condition.And);
-		} else if (andFilters.size() == 0 && orFilters.size() != 0) {
+		} else if (andFilters.size() == 0 && orFilters.size() > 0) {
 			return parseFilters(orFilters, criteriaBuilder, root, predicate, Condition.Or);
-		} else if (andFilters.size() != 0 && orFilters.size() != 0) {
+		} else if (andFilters.size() > 0){
 			return parseFilters(andFilters, criteriaBuilder, root, parseFilters(orFilters, criteriaBuilder, root, predicate, Condition.Or), Condition.And);
-		} else {
-			System.out.println("none predicate");
+		}else {
+			return predicate;
 		}
-		return predicate;
 	}
 
 	private Predicate chooseOrAnd(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Enum type) {
@@ -317,12 +329,4 @@ public class JpaQuery<T> implements Specification<T> {
 			queryOrders.addAll((List<QueryOrder>) queryInfo.get("orders"));
 		}
 	}
-
-	/*
-	 * todo
-	 *
-	 * add text resovler same to apijson or graphql
-	 * maybe change jar to spring-boot-starter
-	 *
-	 * */
 }
