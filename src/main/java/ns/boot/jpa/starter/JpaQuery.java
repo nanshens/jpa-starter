@@ -55,6 +55,16 @@ public class JpaQuery<T> implements Specification<T> {
 		return this;
 	}
 
+	public JpaQuery<T> childAnd(QueryFilter... queryFilters) {
+//		andFilters.addAll(Arrays.asList(queryFilters));
+		return this;
+	}
+
+	public JpaQuery<T> childOr(QueryFilter... queryFilters) {
+//		orFilters.addAll(Arrays.asList(queryFilters));
+		return this;
+	}
+
 	public JpaQuery<T> leftJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftJoin(tableName));
 		return this;
