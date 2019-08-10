@@ -24,6 +24,7 @@ public  class QueryFilter {
     private String name;
     private Object value;
     private MatchType type;
+//    private boolean childQuery;
 
     public QueryFilter(String name, Object value) {
         this.name = name;

@@ -312,7 +312,7 @@ public class JpaQuery<T> implements Specification<T> {
 			case IN:
 				return path.in(queryFilter.getValue());
 			case NOT_IN:
-				return cb.not(path.in(queryFilter.getValue()));
+				return path.in(queryFilter.getValue()).not();
 			case IS_NULL:
 				return cb.isNull(path);
 			case IS_NOT_NULL:
