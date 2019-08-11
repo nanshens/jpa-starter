@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryJoin;
 import ns.boot.jpa.starter.entity.QueryOrder;
+import ns.boot.jpa.starter.enums.Condition;
 import ns.boot.jpa.starter.enums.JoinParams;
 import ns.boot.jpa.starter.enums.MatchType;
 import ns.boot.jpa.starter.utils.QueryUtils;
@@ -31,10 +32,9 @@ import java.util.Map;
  */
 public class JpaQuery<T> implements Specification<T> {
 
-	enum Condition {Or, And}
-
 	private List<QueryFilter> andFilters = new ArrayList<>();
 	private List<QueryFilter> orFilters = new ArrayList<>();
+	private List<QueryFilter> whereFilters = new ArrayList<>();
 	private List<QueryJoin> joinFilters = new ArrayList<>();
 	private List<QueryOrder> queryOrders = new ArrayList<>();
 	private Map<String, Join> joinMap = new HashMap<>();
@@ -46,22 +46,41 @@ public class JpaQuery<T> implements Specification<T> {
 //	}
 
 	public JpaQuery<T> and(QueryFilter... queryFilters) {
+		for (QueryFilter queryFilter : queryFilters) {
+			queryFilter.setChildQuery(false);
+			queryFilter.setCondition(Condition.And);
+			whereFilters.add(queryFilter);
+		}
+
 		andFilters.addAll(Arrays.asList(queryFilters));
 		return this;
 	}
 
 	public JpaQuery<T> or(QueryFilter... queryFilters) {
+		for (QueryFilter queryFilter : queryFilters) {
+			queryFilter.setChildQuery(false);
+			queryFilter.setCondition(Condition.Or);
+			whereFilters.add(queryFilter);
+		}
 		orFilters.addAll(Arrays.asList(queryFilters));
 		return this;
 	}
 
 	public JpaQuery<T> childAnd(QueryFilter... queryFilters) {
-//		andFilters.addAll(Arrays.asList(queryFilters));
+		for (QueryFilter queryFilter : queryFilters) {
+			queryFilter.setChildQuery(true);
+			queryFilter.setCondition(Condition.And);
+			whereFilters.add(queryFilter);
+		}
 		return this;
 	}
 
 	public JpaQuery<T> childOr(QueryFilter... queryFilters) {
-//		orFilters.addAll(Arrays.asList(queryFilters));
+		for (QueryFilter queryFilter : queryFilters) {
+			queryFilter.setChildQuery(true);
+			queryFilter.setCondition(Condition.Or);
+			whereFilters.add(queryFilter);
+		}
 		return this;
 	}
 
@@ -220,19 +239,6 @@ public class JpaQuery<T> implements Specification<T> {
 
 //		criteriaQuery.multiselect(root.get("status"));
 //		criteriaQuery.groupBy(root.get("status"));
-
-
-//		1.select * from customer
-//		where code > '3' or name='2' or address_id ='1';
-//
-//		2.select * from customer
-//		where code > '3' and name='2' and address_id ='1';
-//
-//		3.select * from customer
-//		where code > '3' or (name='2' and address_id ='1');
-//
-//		4.select * from customer
-//		where code < '4' and (name='2' or address_id ='1');
 
 		buildSort(root, criteriaQuery, criteriaBuilder);
 		if (andFilters.size() > 0 && orFilters.size() == 0) {

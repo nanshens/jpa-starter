@@ -3,6 +3,7 @@ package ns.boot.jpa.starter.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ns.boot.jpa.starter.enums.Condition;
 import ns.boot.jpa.starter.enums.MatchType;
 import ns.boot.jpa.starter.utils.QueryUtils;
 
@@ -18,17 +19,23 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public  class QueryFilter {
 
     private String name;
     private Object value;
     private MatchType type;
-//    private boolean childQuery;
+    private boolean childQuery;
+    private Condition condition;
 
-    public QueryFilter(String name, Object value) {
+//    public QueryFilter(String name, Object value) {
+//        this.name = name;
+//        this.value = value;
+//    }
+
+    public QueryFilter(String name, Object value, MatchType type) {
         this.name = name;
         this.value = value;
+        this.type = type;
     }
 
     public static QueryFilter eq(String name, Object value){
