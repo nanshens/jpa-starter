@@ -233,7 +233,7 @@ public class JpaQuery<T> implements Specification<T> {
 	@Override
 	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
 		Predicate predicate = null;
-		buildQueryFilter();
+//		buildQueryFilter();
 //		addJoin(joinFilters, root);
 //		removeNullFilters();
 
@@ -252,6 +252,20 @@ public class JpaQuery<T> implements Specification<T> {
 		}
 	}
 
+	/* new build predicate logic
+	 * 1. base on last filter to select on and or
+	 * 2. childor and childand
+	 *
+	 * */
+	private void buildPredicate() {
+		for (QueryFilter qf : whereFilters) {
+			if (qf.getCondition() == Condition.And){
+
+			}
+
+		}
+	}
+	
 	private Predicate chooseOrAnd(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Enum type) {
 		return basicPredicate == null ?
 				newPredicate :
