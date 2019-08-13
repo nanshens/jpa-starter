@@ -257,13 +257,21 @@ public class JpaQuery<T> implements Specification<T> {
 	 * 2. childor and childand
 	 *
 	 * */
-	private void buildPredicate() {
-		for (QueryFilter qf : whereFilters) {
-			if (qf.getCondition() == Condition.And){
-
+	private Predicate buildPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+		Predicate predicate = null;
+		for (int i = 0; i < whereFilters.size(); i++) {
+			QueryFilter qf = whereFilters.get(i);
+			if (i == 0) {
+				predicate = buildPredicate(qf, root, cb);
+			} else {
+				if (qf.getCondition().equals(Condition.And)) {
+					predicate = cb.and(predicate, buildPredicate(qf, root, cb));
+				} else {
+					predicate = cb.or(predicate, buildPredicate(qf, root, cb));
+				}
 			}
-
 		}
+		return predicate;
 	}
 	
 	private Predicate chooseOrAnd(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Enum type) {
