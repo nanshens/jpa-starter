@@ -272,51 +272,46 @@ public class JpaQuery<T> implements Specification<T> {
 
 		Predicate predicate = null;
 		Predicate childPredicate = null;
-		Condition childCondition;
+		Condition childCondition = null;
 		for (int i = 0; i < whereFilters.size(); i++) {
 			QueryFilter qf = whereFilters.get(i);
 			if (i == 0) {
 				predicate = buildPredicate(qf, root, cb);
 			} else {
 				QueryFilter lastqf = whereFilters.get(i - 1);
-				childCondition = lastqf.getCondition();
 				if (qf.isChildQuery()) {
 					if (!lastqf.isChildQuery()) {
+						childCondition = lastqf.getCondition();
 						childPredicate = buildPredicate(qf, root, cb);
 					} else {
-						if (qf.getCondition().equals(Condition.And)) {
-							childPredicate = cb.and(childPredicate, buildPredicate(qf, root, cb));
-						} else {
-							childPredicate = cb.or(childPredicate, buildPredicate(qf, root, cb));
+						if (lastqf.getCondition() == qf.getCondition()) {
+							childPredicate = selectCondition(childPredicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
+						}else {
+//							childand -childor
+						}
+						if (i == whereFilters.size() - 1) {
+							predicate = selectCondition(predicate, childPredicate, cb, childCondition);
 						}
 					}
 				}else{
 					if (lastqf.isChildQuery()) {
-						if (childCondition.equals(Condition.And)) {
-							predicate = cb.and(predicate, childPredicate);
-						} else {
-							predicate = cb.or(predicate, childPredicate);
-						}
+						predicate = selectCondition(predicate, childPredicate, cb, childCondition);
 
-						if (qf.getCondition().equals(Condition.And)) {
-							predicate = cb.and(predicate, buildPredicate(qf, root, cb));
-						} else {
-							predicate = cb.or(predicate, buildPredicate(qf, root, cb));
-						}
+						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
 						childPredicate = null;
 					}else {
-						if (qf.getCondition().equals(Condition.And)) {
-							predicate = cb.and(predicate, buildPredicate(qf, root, cb));
-						} else {
-							predicate = cb.or(predicate, buildPredicate(qf, root, cb));
-						}
+						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
 					}
 				}
 			}
 		}
 		return predicate;
 	}
-	
+
+	public Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Condition condition) {
+		return condition == Condition.And ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
+	}
+
 	private Predicate chooseOrAnd(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Enum type) {
 		return basicPredicate == null ?
 				newPredicate :
