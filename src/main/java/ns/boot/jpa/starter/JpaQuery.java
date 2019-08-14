@@ -231,7 +231,7 @@ public class JpaQuery<T> implements Specification<T> {
 //	}
 
 	@Override
-	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
 		Predicate predicate = null;
 //		buildQueryFilter();
 //		addJoin(joinFilters, root);
@@ -240,42 +240,76 @@ public class JpaQuery<T> implements Specification<T> {
 //		criteriaQuery.multiselect(root.get("status"));
 //		criteriaQuery.groupBy(root.get("status"));
 
-		buildSort(root, criteriaQuery, criteriaBuilder);
-		if (andFilters.size() > 0 && orFilters.size() == 0) {
-			return parseFilters(andFilters, criteriaBuilder, root, predicate, Condition.And);
-		} else if (andFilters.size() == 0 && orFilters.size() > 0) {
-			return parseFilters(orFilters, criteriaBuilder, root, predicate, Condition.Or);
-		} else if (andFilters.size() > 0){
-			return parseFilters(andFilters, criteriaBuilder, root, parseFilters(orFilters, criteriaBuilder, root, predicate, Condition.Or), Condition.And);
-		}else {
-			return predicate;
-		}
+		buildSort(root, cq, cb);
+//		if (andFilters.size() > 0 && orFilters.size() == 0) {
+//			return parseFilters(andFilters, criteriaBuilder, root, predicate, Condition.And);
+//		} else if (andFilters.size() == 0 && orFilters.size() > 0) {
+//			return parseFilters(orFilters, criteriaBuilder, root, predicate, Condition.Or);
+//		} else if (andFilters.size() > 0){
+//			return parseFilters(andFilters, criteriaBuilder, root, parseFilters(orFilters, criteriaBuilder, root, predicate, Condition.Or), Condition.And);
+//		}else {
+//			return predicate;
+//		}
+
+//		Predicate child1 = cb.and(cb.equal(root.get("name"), "3"),
+//				cb.equal(root.get("code"), "3"));
+//		Predicate child2 = cb.and(cb.equal(root.get("name"), "3"),
+//				cb.equal(root.get("code"), "3"));
+
+//		predicate = cb.or(child1, child2);
+
+//		return predicate;
+		return buildPredicate(root, cb);
 	}
 
 	/* new build predicate logic
 	 * 1. base on last filter to select on and or
 	 * 2. childor and childand
+	 * 3. bug no bracket in and, or
 	 *
 	 * */
-	private Predicate buildPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+	private Predicate buildPredicate(Root<T> root, CriteriaBuilder cb) {
+
 		Predicate predicate = null;
 		Predicate childPredicate = null;
+		Condition childCondition;
 		for (int i = 0; i < whereFilters.size(); i++) {
 			QueryFilter qf = whereFilters.get(i);
 			if (i == 0) {
 				predicate = buildPredicate(qf, root, cb);
 			} else {
+				QueryFilter lastqf = whereFilters.get(i - 1);
+				childCondition = lastqf.getCondition();
 				if (qf.isChildQuery()) {
-					if (qf.getCondition().equals(Condition.And)) {
-						childPredicate = cb.and(predicate, buildPredicate(qf, root, cb));
+					if (!lastqf.isChildQuery()) {
+						childPredicate = buildPredicate(qf, root, cb);
 					} else {
-						childPredicate = cb.or(predicate, buildPredicate(qf, root, cb));
+						if (qf.getCondition().equals(Condition.And)) {
+							childPredicate = cb.and(childPredicate, buildPredicate(qf, root, cb));
+						} else {
+							childPredicate = cb.or(childPredicate, buildPredicate(qf, root, cb));
+						}
 					}
 				}else{
-					if (qf.getCondition().equals(Condition.And)) {
-						predicate = cb.and(predicate, buildPredicate(qf, root, cb));
-					} else {
-						predicate = cb.or(predicate, buildPredicate(qf, root, cb));
+					if (lastqf.isChildQuery()) {
+						if (childCondition.equals(Condition.And)) {
+							predicate = cb.and(predicate, childPredicate);
+						} else {
+							predicate = cb.or(predicate, childPredicate);
+						}
+
+						if (qf.getCondition().equals(Condition.And)) {
+							predicate = cb.and(predicate, buildPredicate(qf, root, cb));
+						} else {
+							predicate = cb.or(predicate, buildPredicate(qf, root, cb));
+						}
+						childPredicate = null;
+					}else {
+						if (qf.getCondition().equals(Condition.And)) {
+							predicate = cb.and(predicate, buildPredicate(qf, root, cb));
+						} else {
+							predicate = cb.or(predicate, buildPredicate(qf, root, cb));
+						}
 					}
 				}
 			}
