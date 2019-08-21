@@ -18,12 +18,12 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -47,6 +47,9 @@ public class JpaQuery<T> implements Specification<T> {
 
 	public JpaQuery<T> and(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
+			if (Objects.isNull(queryFilter.getValue())) {
+				continue;
+			}
 			queryFilter.setChildQuery(false);
 			queryFilter.setCondition(Condition.And);
 			whereFilters.add(queryFilter);
@@ -58,6 +61,9 @@ public class JpaQuery<T> implements Specification<T> {
 
 	public JpaQuery<T> or(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
+			if (Objects.isNull(queryFilter.getValue())) {
+				continue;
+			}
 			queryFilter.setChildQuery(false);
 			queryFilter.setCondition(Condition.Or);
 			whereFilters.add(queryFilter);
@@ -366,9 +372,6 @@ public class JpaQuery<T> implements Specification<T> {
 				return cb.lessThan(path, (Comparable) queryFilter.getValue());
 			case LE:
 				return cb.lessThanOrEqualTo(path, (Comparable) queryFilter.getValue());
-			case BETWEEN:
-				List<Comparable> vs = (ArrayList) queryFilter.getValue();
-				return cb.between(path, vs.get(0), vs.get(1));
 			case LIKE:
 				return cb.like(path, (String) queryFilter.getValue());
 			case NOT_LIKE:
@@ -381,8 +384,10 @@ public class JpaQuery<T> implements Specification<T> {
 				return cb.isNull(path);
 			case IS_NOT_NULL:
 				return cb.isNotNull(path);
+			case BETWEEN:
 			default:
-				return cb.equal(path, queryFilter.getName());
+				List<Comparable> vs = (ArrayList) queryFilter.getValue();
+				return cb.between(path, vs.get(0), vs.get(1));
 		}
 	}
 
