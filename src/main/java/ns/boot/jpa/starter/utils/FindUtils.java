@@ -45,6 +45,8 @@ public class FindUtils {
 	private final static String LE = "<=";
 	private final static String AND = "&";
 
+	private final static String reg = "[\\!\\=\\<\\>\\&\\|\\~]+";
+
 	public static List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) throws JpaException {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
@@ -160,13 +162,7 @@ public class FindUtils {
 	}
 
 	private static String clearSpecChar(String str) {
-		str = str.replace(LT, "")
-				.replace(GT, "")
-				.replace(EQ, "")
-				.replace(LIKE, "")
-				.replace(NOT, "")
-				.replace(AND, "");
-		return str;
+		return str.replaceAll(reg, str);
 	}
 
 	private static Object buildValue(Class fClass, Object o) throws ParseException {

@@ -269,7 +269,6 @@ public class JpaQuery<T> implements Specification<T> {
 	 *
 	 * */
 	private Predicate buildPredicate(Root<T> root, CriteriaBuilder cb) {
-
 		Predicate predicate = null;
 		Predicate childPredicate = null;
 		Condition childCondition = null;
@@ -296,7 +295,6 @@ public class JpaQuery<T> implements Specification<T> {
 				}else{
 					if (lastqf.isChildQuery()) {
 						predicate = selectCondition(predicate, childPredicate, cb, childCondition);
-
 						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
 						childPredicate = null;
 					}else {
