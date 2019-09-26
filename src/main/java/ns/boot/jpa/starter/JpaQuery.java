@@ -180,10 +180,24 @@ public class JpaQuery<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQuery<T> removeFilters(String... names) {
+//	public JpaQuery<T> removeFilters(String... names) {
+//		for (String name : names) {
+//			andFilters.removeIf(af -> af.getName().equals(name));
+//			orFilters.removeIf(of -> of.getName().equals(name));
+//		}
+//		return this;
+//	}
+
+	public JpaQuery<T> removeFiltersIn(String... names) {
 		for (String name : names) {
-			andFilters.removeIf(af -> af.getName().equals(name));
-			orFilters.removeIf(of -> of.getName().equals(name));
+			whereFilters.removeIf(af -> af.getName().equals(name));
+		}
+		return this;
+	}
+
+	public JpaQuery<T> removeFiltersEx(String... names) {
+		for (String name : names) {
+			whereFilters.removeIf(af -> !af.getName().equals(name));
 		}
 		return this;
 	}
@@ -211,8 +225,9 @@ public class JpaQuery<T> implements Specification<T> {
 	}
 
 	private JpaQuery<T> removeNullFilters() {
-		andFilters.removeIf(af -> af.getName().equals(null) || af.getName().equals(""));
-		orFilters.removeIf(of -> of.getName().equals(null) || of.getName().equals(""));
+//		andFilters.removeIf(af -> af.getValue().equals(null) || af.getValue().equals(""));
+//		orFilters.removeIf(of -> of.getValue().equals(null) || of.getValue().equals(""));
+		whereFilters.removeIf(wf -> wf.getValue().equals(null) || wf.getValue().equals("") || wf.getValue().equals("%%"));
 		return this;
 	}
 
@@ -241,7 +256,7 @@ public class JpaQuery<T> implements Specification<T> {
 		Predicate predicate = null;
 //		buildQueryFilter();
 //		addJoin(joinFilters, root);
-//		removeNullFilters();
+		removeNullFilters();
 
 //		criteriaQuery.multiselect(root.get("status"));
 //		criteriaQuery.groupBy(root.get("status"));
@@ -361,9 +376,9 @@ public class JpaQuery<T> implements Specification<T> {
 		Path path = buildPath(queryFilter.getName(), root);
 		switch (queryFilter.getType()) {
 			case EQ:
-				return cb.equal(path, queryFilter.getName());
+				return cb.equal(path, queryFilter.getValue());
 			case NE:
-				return cb.notEqual(path, queryFilter.getName());
+				return cb.notEqual(path, queryFilter.getValue());
 			case GT:
 				return cb.greaterThan(path, (Comparable) queryFilter.getValue());
 			case GE:
