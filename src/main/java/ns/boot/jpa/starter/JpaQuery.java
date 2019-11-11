@@ -377,6 +377,8 @@ public class JpaQuery<T> implements Specification<T> {
 		switch (queryFilter.getType()) {
 			case EQ:
 				return cb.equal(path, queryFilter.getValue());
+			case EQ_IG_CASE:
+				return cb.equal(cb.lower(path), ((String)queryFilter.getValue()).toLowerCase());
 			case NE:
 				return cb.notEqual(path, queryFilter.getValue());
 			case GT:
@@ -389,8 +391,12 @@ public class JpaQuery<T> implements Specification<T> {
 				return cb.lessThanOrEqualTo(path, (Comparable) queryFilter.getValue());
 			case LIKE:
 				return cb.like(path, (String) queryFilter.getValue());
+			case LIKE_IG_CASE:
+				return cb.like(cb.lower(path), ((String)queryFilter.getValue()).toLowerCase());
 			case NOT_LIKE:
 				return cb.notLike(path, (String) queryFilter.getValue());
+			case NOT_LIKE_IG_CASE:
+				return cb.notLike(cb.lower(path), ((String)queryFilter.getValue()).toLowerCase());
 			case IN:
 				return path.in(queryFilter.getValue());
 			case NOT_IN:

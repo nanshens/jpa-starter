@@ -42,6 +42,10 @@ public  class QueryFilter {
         return new QueryFilter(name, value, MatchType.EQ);
     }
 
+    public static QueryFilter eqIgnoreCase(String name, Object value){
+        return new QueryFilter(name, value, MatchType.EQ_IG_CASE);
+    }
+
     public static QueryFilter ne(String name, Object value){
         return new QueryFilter(name, value, MatchType.NE);
     }
@@ -67,6 +71,13 @@ public  class QueryFilter {
             value = "";
         }
         return new QueryFilter(name, "%"+value+"%", MatchType.LIKE);
+    }
+
+    public static QueryFilter likeIgnoreCase(String name, String value){
+        if (QueryUtils.isNullOrEmpty(value)){
+            value = "";
+        }
+        return new QueryFilter(name, "%"+value.toLowerCase()+"%", MatchType.LIKE_IG_CASE);
     }
 
     public static QueryFilter in(String name, Object... valueList){

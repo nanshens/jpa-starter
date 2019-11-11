@@ -16,13 +16,16 @@ import java.util.EnumSet;
 public enum MatchType {
 
     EQ,
+    EQ_IG_CASE,
     NE,
     GT,
     LT,
     GE,
     LE,
     LIKE,
+    LIKE_IG_CASE,
     NOT_LIKE,
+    NOT_LIKE_IG_CASE,
     IN,
     NOT_IN,
     IS_NULL,
