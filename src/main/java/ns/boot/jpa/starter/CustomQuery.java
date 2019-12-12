@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author acer
  * @date 2018/7/30
  */
-public class JpaQueryT<T> implements Specification<T> {
+public class CustomQuery<T> implements Specification<T> {
 
 	private List<QueryFilter> andFilters = new ArrayList<>();
 	private List<QueryFilter> orFilters = new ArrayList<>();
@@ -42,7 +42,7 @@ public class JpaQueryT<T> implements Specification<T> {
 //		initParseMap();
 //	}
 
-	public JpaQueryT<T> and(QueryFilter... queryFilters) {
+	public CustomQuery<T> and(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			if (Objects.isNull(queryFilter.getValue())) {
 				continue;
@@ -56,7 +56,7 @@ public class JpaQueryT<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQueryT<T> or(QueryFilter... queryFilters) {
+	public CustomQuery<T> or(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			if (Objects.isNull(queryFilter.getValue())) {
 				continue;
@@ -69,7 +69,7 @@ public class JpaQueryT<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQueryT<T> childAnd(QueryFilter... queryFilters) {
+	public CustomQuery<T> childAnd(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			queryFilter.setChildQuery(true);
 			queryFilter.setCondition(Condition.And);
@@ -78,7 +78,7 @@ public class JpaQueryT<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQueryT<T> childOr(QueryFilter... queryFilters) {
+	public CustomQuery<T> childOr(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			queryFilter.setChildQuery(true);
 			queryFilter.setCondition(Condition.Or);
@@ -87,93 +87,93 @@ public class JpaQueryT<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQueryT<T> leftJoin(String tableName) {
+	public CustomQuery<T> leftJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> leftListJoin(String tableName) {
+	public CustomQuery<T> leftListJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftListJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> leftSetJoin(String tableName) {
+	public CustomQuery<T> leftSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftSetJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> leftMapJoin(String tableName) {
+	public CustomQuery<T> leftMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftMapJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> rightJoin(String tableName) {
+	public CustomQuery<T> rightJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> rightListJoin(String tableName) {
+	public CustomQuery<T> rightListJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightListJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> rightSetJoin(String tableName) {
+	public CustomQuery<T> rightSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightSetJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> rightMapJoin(String tableName) {
+	public CustomQuery<T> rightMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightMapJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> innerJoin(String tableName) {
+	public CustomQuery<T> innerJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> innerListJoin(String tableName) {
+	public CustomQuery<T> innerListJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerListJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> innerSetJoin(String tableName) {
+	public CustomQuery<T> innerSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerSetJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> innerMapJoin(String tableName) {
+	public CustomQuery<T> innerMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerMapJoin(tableName));
 		return this;
 	}
 
-	public JpaQueryT<T> order(QueryOrder... orders) {
+	public CustomQuery<T> order(QueryOrder... orders) {
 		queryOrders.addAll(Arrays.asList(orders));
 		return this;
 	}
 
-	public JpaQueryT<T> clearAllFilters() {
+	public CustomQuery<T> clearAllFilters() {
 		clearAndFilters();
 		clearOrFilters();
 		return this;
 	}
 
-	public JpaQueryT<T> clearAndFilters() {
+	public CustomQuery<T> clearAndFilters() {
 		andFilters.clear();
 		return this;
 	}
 
-	public JpaQueryT<T> clearOrFilters() {
+	public CustomQuery<T> clearOrFilters() {
 		orFilters.clear();
 		return this;
 	}
 
-	public JpaQueryT<T> clearOrders() {
+	public CustomQuery<T> clearOrders() {
 		queryOrders.clear();
 		return this;
 	}
 
-	public JpaQueryT<T> addQueryInfo(Object o) {
+	public CustomQuery<T> addQueryInfo(Object o) {
 		return this;
 	}
 
@@ -185,21 +185,21 @@ public class JpaQueryT<T> implements Specification<T> {
 //		return this;
 //	}
 
-	public JpaQueryT<T> removeFiltersIn(String... names) {
+	public CustomQuery<T> removeFiltersIn(String... names) {
 		for (String name : names) {
 			whereFilters.removeIf(af -> af.getName().equals(name));
 		}
 		return this;
 	}
 
-	public JpaQueryT<T> removeFiltersEx(String... names) {
+	public CustomQuery<T> removeFiltersEx(String... names) {
 		for (String name : names) {
 			whereFilters.removeIf(af -> !af.getName().equals(name));
 		}
 		return this;
 	}
 
-	public JpaQueryT<T> rmAndFilter(String name, int index) {
+	public CustomQuery<T> rmAndFilter(String name, int index) {
 		List<Integer> ids = new ArrayList<>();
 		for (int i = 0; i < andFilters.size(); i++) {
 			if (andFilters.get(i).getName().equals(name)) {
@@ -210,7 +210,7 @@ public class JpaQueryT<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQueryT<T> rmOrFilter(String name, int index) {
+	public CustomQuery<T> rmOrFilter(String name, int index) {
 		List<Integer> ids = new ArrayList<>();
 		for (int i = 0; i < orFilters.size(); i++) {
 			if (orFilters.get(i).getName().equals(name)) {
@@ -221,14 +221,14 @@ public class JpaQueryT<T> implements Specification<T> {
 		return this;
 	}
 
-	private JpaQueryT<T> removeNullFilters() {
+	private CustomQuery<T> removeNullFilters() {
 //		andFilters.removeIf(af -> af.getValue().equals(null) || af.getValue().equals(""));
 //		orFilters.removeIf(of -> of.getValue().equals(null) || of.getValue().equals(""));
 		whereFilters.removeIf(wf -> wf.getValue().equals(null) || wf.getValue().equals("") || wf.getValue().equals("%%"));
 		return this;
 	}
 
-	public JpaQueryT(Object object) {
+	public CustomQuery(Object object) {
 //		queryInfoObject = object;
 //		getPageInfo(object);
 //		buildQueryParams(object);
@@ -237,7 +237,7 @@ public class JpaQueryT<T> implements Specification<T> {
 		queryInfo = QueryUtils.objectMap(object);
 	}
 
-	public JpaQueryT() {
+	public CustomQuery() {
 	}
 
 //	@SneakyThrows

@@ -9,23 +9,31 @@ import java.util.List;
  * @author ns
  */
 
-public class JpaQuery {
+public abstract class JpaQuery {
 
-	private JSONObject jsonQuery;
-	private String sqlQuery;
-	private JpaQueryT jpaQueryT;
+	protected JSONObject jsonQuery;
+	protected String sqlQuery;
+	protected CustomQuery customQuery;
 
-	public void input(JSONObject query) {
-
+	public JSONObject getQueryJson() {
+		return jsonQuery;
 	}
 
-	public void input(String query) {
-
+	public String getQuerySql() {
+		return sqlQuery;
 	}
 
-	public void input(JpaQueryT query) {
-
-	}
+//	public void input(JSONObject query){
+//		this.jsonQuery = query;
+//	}
+//
+//	public void input(String query) {
+//		this.sqlQuery = query;
+//	}
+//
+//	public void input(CustomQuery query) {
+//
+//	}
 
 	public void cache() {
 
@@ -54,5 +62,9 @@ public class JpaQuery {
 
 	private Page resultPage() {
 		return null;
+	}
+
+	private boolean isInputed() {
+		return sqlQuery != null || jsonQuery != null;
 	}
 }
