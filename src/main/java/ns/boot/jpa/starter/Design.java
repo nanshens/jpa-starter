@@ -62,5 +62,16 @@ public class Design {
 		*
 		* */
 
+		/*
+		* use case
+		* JpaQuery jq = new JpaQuery();
+		* jq.cache(() -> { custom cache method});
+		* jq.input(json);
+		* jq.input(query); is error input is already exist!
+		* jq.resultList();
+		* jq.resultJson(); dont repeat query
+		* jp.resultPage();
+		* */
+
 	}
 }

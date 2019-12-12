@@ -11,6 +11,10 @@ import java.util.List;
 
 public class JpaQuery {
 
+	private JSONObject jsonQuery;
+	private String sqlQuery;
+	private JpaQueryT jpaQueryT;
+
 	public void input(JSONObject query) {
 
 	}
@@ -33,6 +37,10 @@ public class JpaQuery {
 
 
 	private void query() {
+
+	}
+
+	private void buildSpecification(){
 
 	}
 
