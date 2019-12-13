@@ -38,10 +38,6 @@ public class CustomQuery<T> implements Specification<T> {
 //	private static Map<Enum, Method> parseJoinMap = new HashMap<>();
 	private Map<String, Object> queryInfo;
 
-//	static {
-//		initParseMap();
-//	}
-
 	public CustomQuery<T> and(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			if (Objects.isNull(queryFilter.getValue())) {
