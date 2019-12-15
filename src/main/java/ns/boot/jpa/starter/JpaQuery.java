@@ -20,6 +20,9 @@ public abstract class JpaQuery<T> {
 		entityClass = tClass;
 	}
 
+	public JpaQuery() {
+	}
+
 	protected EntityManager getEm() {
 		return em;
 	}

@@ -15,6 +15,10 @@ import java.util.List;
 public class JpaSqlQuery<T> extends JpaQuery<T>{
 	private String sqlQuery;
 
+	public JpaSqlQuery() {
+		super();
+	}
+
 	public JpaSqlQuery(Class<T> tClass) {
 		super(tClass);
 	}
@@ -32,7 +36,9 @@ public class JpaSqlQuery<T> extends JpaQuery<T>{
 	}
 
 	private List<T> query() {
-		Query query = getEm().createNativeQuery(sqlQuery, entityClass);
+
+		Query query = entityClass == null ? getEm().createNativeQuery(sqlQuery) :
+				getEm().createNativeQuery(sqlQuery, entityClass);
 		return query.getResultList();
 	}
 
