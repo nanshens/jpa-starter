@@ -1,41 +1,29 @@
 package ns.boot.jpa.starter;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 
 /**
  * @author ns
  */
 
-public abstract class JpaQuery {
+public abstract class JpaQuery<T> {
+	protected Class<T> entityClass;
+	@Autowired private EntityManager em;
 
-	protected JSONObject jsonQuery;
-	protected String sqlQuery;
-	protected CustomQuery customQuery;
-
-	public JSONObject getQueryJson() {
-		return jsonQuery;
+	public JpaQuery(Class<T> tClass) {
+		entityClass = tClass;
 	}
 
-	public String getQuerySql() {
-		return sqlQuery;
+	protected EntityManager getEm() {
+		return em;
 	}
-
-//	public void input(JSONObject query){
-//		this.jsonQuery = query;
-//	}
-//
-//	public void input(String query) {
-//		this.sqlQuery = query;
-//	}
-//
-//	public void input(CustomQuery query) {
-//
-//	}
-
-	public void cache() {
+	private void cache() {
 
 	}
 
@@ -43,28 +31,11 @@ public abstract class JpaQuery {
 
 	}
 
-
 	private void query() {
 
 	}
 
-	private void buildSpecification(){
-
-	}
-
-	private JSONObject resultJson() {
-		return null;
-	}
-
-	private List resultList() {
-		return null;
-	}
-
-	private Page resultPage() {
-		return null;
-	}
-
-	private boolean isInputed() {
-		return sqlQuery != null || jsonQuery != null;
-	}
+	public abstract JSON resultJson();
+	public abstract List<T> resultList();
+	public abstract Page<T> resultPage();
 }
