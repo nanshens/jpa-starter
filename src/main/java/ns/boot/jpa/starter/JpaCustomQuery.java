@@ -11,7 +11,6 @@ import java.util.List;
 
 public class JpaCustomQuery<T> extends JpaQuery<T>{
 	private CustomQuery<T> customQuery;
-
 	public JpaCustomQuery(Class<T> tClass) {
 		super(tClass);
 	}
@@ -21,7 +20,15 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 		return this;
 	}
 
-	private void buildSpecification(){
+	public void buildSpecification(){
+
+	}
+
+	public void parser() {
+
+	}
+
+	private List<T> query() {
 
 	}
 
