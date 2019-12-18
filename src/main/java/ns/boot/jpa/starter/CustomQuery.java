@@ -12,6 +12,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -21,6 +22,26 @@ import java.util.List;
 public class CustomQuery<T> implements Specification<T> {
 	private List<QueryFilter> filters = new ArrayList<>();
 	private List<QueryOrder> orders = new ArrayList<>();
+	private int page;
+	private int limit;
+
+
+	protected int getPage() {
+		return page;
+	}
+
+	protected void setPage(int page) {
+		this.page = page;
+	}
+
+	protected int getLimit() {
+		return limit;
+	}
+
+	protected void setLimit(int limit) {
+		this.limit = limit;
+	}
+
 	public CustomQuery<T> and(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			if ("".equals(queryFilter.getValue()) && "%%".equals(queryFilter.getValue())) {
@@ -44,6 +65,12 @@ public class CustomQuery<T> implements Specification<T> {
 		}
 		return this;
 	}
+
+	public CustomQuery<T> order(QueryOrder... queryOrders) {
+		orders.addAll(Arrays.asList(queryOrders));
+		return this;
+	}
+
 	private void buildSort(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
 		orders.forEach(order -> {
 			if (order.getDirection().equals(Sort.Direction.ASC)) {
