@@ -98,42 +98,16 @@ public class CustomQuery<T> implements Specification<T> {
 
 	private Predicate buildPredicate(Root<T> root, CriteriaBuilder cb) {
 		Predicate predicate = null;
-		Predicate childPredicate = null;
-		Condition childCondition = null;
 		for (int i = 0; i < filters.size(); i++) {
 			QueryFilter qf = filters.get(i);
-			if (i == 0) {
+			if (i == 0){
 				predicate = buildPredicate(qf, root, cb);
 			} else {
-				QueryFilter lastqf = filters.get(i - 1);
-				if (qf.isChildQuery()) {
-					if (!lastqf.isChildQuery()) {
-						childCondition = lastqf.getCondition();
-						childPredicate = buildPredicate(qf, root, cb);
-					} else {
-						if (lastqf.getCondition() == qf.getCondition()) {
-							childPredicate = selectCondition(childPredicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
-						}else {
-//							childand -childor
-						}
-						if (i == filters.size() - 1) {
-							predicate = selectCondition(predicate, childPredicate, cb, childCondition);
-						}
-					}
-				}else{
-					if (lastqf.isChildQuery()) {
-						predicate = selectCondition(predicate, childPredicate, cb, childCondition);
-						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
-						childPredicate = null;
-					}else {
-						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
-					}
-				}
+				predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
 			}
 		}
 		return predicate;
 	}
-
 	public Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Condition condition) {
 		return condition == Condition.And ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
 	}
