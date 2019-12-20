@@ -4,8 +4,11 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryOrder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;

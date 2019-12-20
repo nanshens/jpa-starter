@@ -36,7 +36,6 @@ public class JpaSqlQuery<T> extends JpaQuery<T>{
 	}
 
 	private List<T> query() {
-
 		Query query = entityClass == null ? getEm().createNativeQuery(sqlQuery) :
 				getEm().createNativeQuery(sqlQuery, entityClass);
 		return query.getResultList();
