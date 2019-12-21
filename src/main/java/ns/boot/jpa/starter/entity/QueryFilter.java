@@ -66,18 +66,44 @@ public  class QueryFilter {
         return new QueryFilter(name, value, MatchType.LE);
     }
 
-    public static QueryFilter like(String name, String value){
+    public static QueryFilter startLike(String name, String value){
         if (QueryUtils.isNullOrEmpty(value)){
             value = "";
         }
-        return new QueryFilter(name, "%"+value+"%", MatchType.LIKE);
+        return new QueryFilter(name, "%" + value, MatchType.LIKE);
     }
 
-    public static QueryFilter likeIgnoreCase(String name, String value){
+    public static QueryFilter startLikeIgnoreCase(String name, String value){
         if (QueryUtils.isNullOrEmpty(value)){
             value = "";
         }
-        return new QueryFilter(name, "%"+value.toLowerCase()+"%", MatchType.LIKE_IG_CASE);
+        return new QueryFilter(name, "%" + value.toLowerCase(), MatchType.LIKE_IG_CASE);
+    }
+    public static QueryFilter endLike(String name, String value){
+        if (QueryUtils.isNullOrEmpty(value)){
+            value = "";
+        }
+        return new QueryFilter(name, value + "%", MatchType.LIKE);
+    }
+
+    public static QueryFilter endLikeIgnoreCase(String name, String value){
+        if (QueryUtils.isNullOrEmpty(value)){
+            value = "";
+        }
+        return new QueryFilter(name, value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
+    }
+    public static QueryFilter allLike(String name, String value){
+        if (QueryUtils.isNullOrEmpty(value)){
+            value = "";
+        }
+        return new QueryFilter(name, "%" + value + "%", MatchType.LIKE);
+    }
+
+    public static QueryFilter allLikeIgnoreCase(String name, String value){
+        if (QueryUtils.isNullOrEmpty(value)){
+            value = "";
+        }
+        return new QueryFilter(name, "%" + value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
 
     public static QueryFilter in(String name, Object... valueList){

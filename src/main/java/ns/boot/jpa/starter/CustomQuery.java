@@ -47,7 +47,7 @@ public class CustomQuery<T> implements Specification<T> {
 			if ("".equals(queryFilter.getValue()) && "%%".equals(queryFilter.getValue())) {
 				continue;
 			}
-			queryFilter.setChildQuery(false);
+//			queryFilter.setChildQuery(false);
 			queryFilter.setCondition(Condition.And);
 			filters.add(queryFilter);
 		}
@@ -59,7 +59,7 @@ public class CustomQuery<T> implements Specification<T> {
 			if ("".equals(queryFilter.getValue()) && "%%".equals(queryFilter.getValue())) {
 				continue;
 			}
-			queryFilter.setChildQuery(false);
+//			queryFilter.setChildQuery(false);
 			queryFilter.setCondition(Condition.Or);
 			filters.add(queryFilter);
 		}
