@@ -56,10 +56,21 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 //	}
 
 	public void parser() {
+		//parser
+		CriteriaBuilder builder = getEm().getCriteriaBuilder();
+		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClass);
+		Root<T> root = criteriaQuery.from(entityClass);
+		Predicate predicate = customQuery.toPredicate(root, criteriaQuery, builder);
 
+		if (predicate != null) {
+			criteriaQuery.where(predicate);
+		}
+		Query query = getEm().createQuery(criteriaQuery);
 	}
 
 	private List<T> query() {
+		// get all
+		parser();
 		CriteriaBuilder builder = getEm().getCriteriaBuilder();
 		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClass);
 		Root<T> root = criteriaQuery.from(entityClass);
