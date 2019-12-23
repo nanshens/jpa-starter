@@ -4,13 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryOrder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -43,6 +42,7 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 	public CustomQuery<T> page(int page, int limit) {
 		customQuery.setLimit(limit);
 		customQuery.setPage(page);
+		isPaged = true;
 		return customQuery;
 	}
 
@@ -55,39 +55,56 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 //		return customQuery;
 //	}
 
-	public void parser() {
-		//parser
+	private TypedQuery<T> parser() {
 		CriteriaBuilder builder = getEm().getCriteriaBuilder();
 		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClass);
 		Root<T> root = criteriaQuery.from(entityClass);
+
 		Predicate predicate = customQuery.toPredicate(root, criteriaQuery, builder);
 
 		if (predicate != null) {
 			criteriaQuery.where(predicate);
 		}
-		Query query = getEm().createQuery(criteriaQuery);
-	}
+		criteriaQuery.select(root);
+		TypedQuery<T> query = getEm().createQuery(criteriaQuery);
 
-	private List<T> query() {
-		// get all
-		parser();
-		CriteriaBuilder builder = getEm().getCriteriaBuilder();
-		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClass);
-		Root<T> root = criteriaQuery.from(entityClass);
-		Predicate predicate = customQuery.toPredicate(root, criteriaQuery, builder);
-
-		if (predicate != null) {
-			criteriaQuery.where(predicate);
-		}
-		Query query = getEm().createQuery(criteriaQuery);
-
-		if (customQuery.getLimit() != 0 && customQuery.getPage() != 0) {
+		if (isPaged) {
 			query.setFirstResult((customQuery.getPage() - 1) * customQuery.getLimit())
 					.setMaxResults(customQuery.getLimit());
 		}
 
-		return query.getResultList();
+		return query;
 	}
+
+	private TypedQuery<Long> parserCount() {
+		CriteriaBuilder builder = getEm().getCriteriaBuilder();
+		CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
+		Root<T> root = criteriaQuery.from(entityClass);
+
+		Predicate predicate = customQuery.toPredicate(root, criteriaQuery, builder);
+
+		if (predicate != null) {
+			criteriaQuery.where(predicate);
+		}
+		criteriaQuery.select(builder.count(root));
+		return getEm().createQuery(criteriaQuery);
+	}
+
+	private List<T> query() {
+		return parser().getResultList();
+	}
+
+	private Long queryCount() {
+		List<Long> totals = parserCount().getResultList();
+		long total = 0L;
+
+		for (Long element : totals) {
+			total += element == null ? 0 : element;
+		}
+
+		return total;
+	}
+
 
 	@Override
 	public JSON resultJson() {
@@ -101,6 +118,7 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 
 	@Override
 	public Page<T> resultPage() {
-		return new PageImpl<>(query());
+		return isPaged ? new PageImpl<>(query()) :
+				new PageImpl<>(query(), PageRequest.of(customQuery.getPage(), customQuery.getLimit()), queryCount());
 	}
 }

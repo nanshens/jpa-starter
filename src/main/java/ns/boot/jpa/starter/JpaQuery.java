@@ -13,8 +13,9 @@ import java.util.List;
  */
 
 public abstract class JpaQuery<T> {
-	protected Class<T> entityClass;
 	@Autowired private EntityManager em;
+	protected Class<T> entityClass;
+	protected boolean isPaged;
 
 	public JpaQuery(Class<T> tClass) {
 		entityClass = tClass;
