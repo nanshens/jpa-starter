@@ -9,15 +9,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class JpaQueryFactory {
 
-//	public JpaQuery jsonQuery() {
-//		return new JpaJsonQuery();
-//	}
-	public JpaQuery sqlQuery() {
+	public JpaSqlQuery createSqlQuery() {
 		return new JpaSqlQuery();
 	}
 
-//	public JpaQuery customQuery() {
-//		return new CustomQuery();
-//	}
+	public <T> JpaSqlQuery<T> createSqlQuery(Class<T> tClass) {
+		return new JpaSqlQuery<>(tClass);
+	}
+
+	public <T> JpaJsonQuery<T> createJsonQuery(Class<T> tClass) {
+		return new JpaJsonQuery<>(tClass);
+	}
+
+	public <T> JpaCustomQuery<T> createCustomQuery(Class<T> tClass) {
+		return new JpaCustomQuery<>(tClass);
+	}
 
 }
