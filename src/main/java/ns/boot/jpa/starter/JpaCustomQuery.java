@@ -51,9 +51,9 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 		return this;
 	}
 
-//	public CustomQuery<T> buildSpecification(){
-//		return customQuery;
-//	}
+	public CustomQuery<T> buildSpecification(){
+		return customQuery;
+	}
 
 	private TypedQuery<T> parser() {
 		CriteriaBuilder builder = getEm().getCriteriaBuilder();
