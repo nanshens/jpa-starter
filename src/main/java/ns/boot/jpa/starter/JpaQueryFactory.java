@@ -1,6 +1,9 @@
 package ns.boot.jpa.starter;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.persistence.EntityManager;
 
 /**
  * @author ns
@@ -8,21 +11,30 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JpaQueryFactory {
+	@Autowired EntityManager entityManager;
 
 	public JpaSqlQuery createSqlQuery() {
-		return new JpaSqlQuery();
+		JpaSqlQuery jpaSqlQuery = new JpaSqlQuery();
+		jpaSqlQuery.setEm(entityManager);
+		return jpaSqlQuery;
 	}
 
 	public <T> JpaSqlQuery<T> createSqlQuery(Class<T> tClass) {
-		return new JpaSqlQuery<>(tClass);
+		JpaSqlQuery<T> jpaSqlQuery = new JpaSqlQuery<>(tClass);
+		jpaSqlQuery.setEm(entityManager);
+		return jpaSqlQuery;
 	}
 
 	public <T> JpaJsonQuery<T> createJsonQuery(Class<T> tClass) {
-		return new JpaJsonQuery<>(tClass);
+		JpaJsonQuery<T> jpaJsonQuery = new JpaJsonQuery<>(tClass);
+		jpaJsonQuery.setEm(entityManager);
+		return jpaJsonQuery;
 	}
 
 	public <T> JpaCustomQuery<T> createCustomQuery(Class<T> tClass) {
-		return new JpaCustomQuery<>(tClass);
+		JpaCustomQuery<T> jpaCustomQuery = new JpaCustomQuery<>(tClass);
+		jpaCustomQuery.setEm(entityManager);
+		return jpaCustomQuery;
 	}
 
 }
