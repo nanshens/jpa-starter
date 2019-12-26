@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
  * @author nanshen
  */
 @Configuration
-@ConditionalOnClass(JpaQueryFactory.class)
+@ConditionalOnClass(value = {JpaQueryFactory.class, FindService.class})
 @ConditionalOnWebApplication
 @EnableConfigurationProperties(JpaStarterProperties.class)
 public class AutoConfigure {
@@ -23,5 +23,11 @@ public class AutoConfigure {
 	@ConditionalOnMissingBean
 	JpaQueryFactory getJpaQueryFactory() {
 		return new JpaQueryFactory();
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	FindService getFindService() {
+		return new FindService();
 	}
 }
