@@ -9,24 +9,18 @@ import java.util.List;
 /**
  * @author ns
  */
-public abstract class JpaQuery<T> {
-	protected EntityManager em;
-	protected Class<T> entityClass;
+public abstract class BaseJpaQuery<T> {
+	protected EntityManager entityMgr;
+	protected Class<T> entityClz;
 	protected boolean isPaged;
 
-	public JpaQuery(Class<T> tClass) {
-		entityClass = tClass;
+	protected BaseJpaQuery(Class<T> entityClz, EntityManager entityMgr) {
+		this.entityClz = entityClz;
+		this.entityMgr = entityMgr;
 	}
 
-	public JpaQuery() {
-	}
-
-	protected EntityManager getEm() {
-		return em;
-	}
-
-	protected void setEm(EntityManager em) {
-		this.em = em;
+	public BaseJpaQuery(EntityManager entityMgr) {
+		this.entityMgr = entityMgr;
 	}
 
 	private void cache() {

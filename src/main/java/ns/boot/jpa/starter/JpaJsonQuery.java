@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -29,13 +30,14 @@ import java.util.stream.Collectors;
  * @author ns
  */
 
-public class JpaJsonQuery<T> extends JpaQuery<T>{
+public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 	private JSONObject jsonQuery;
 	private Map<String, List<String>> column;
 	private Map<String, Integer> pageable;
 	private Map<String, String> sort;
-	public JpaJsonQuery(Class<T> tClass) {
-		super(tClass);
+
+	protected JpaJsonQuery(Class<T> entityClz, EntityManager entityMgr) {
+		super(entityClz, entityMgr);
 	}
 
 	public JpaJsonQuery<T> input(JSONObject jsonQuery){
@@ -46,11 +48,11 @@ public class JpaJsonQuery<T> extends JpaQuery<T>{
 	private List<T> query() {
 
 		Map<String, Map> queryJsonMap = jsonQuery.toJavaObject(Map.class);
-		Map<String, Field> queryFields = QueryUtils.getClassField(entityClass);
+		Map<String, Field> queryFields = QueryUtils.getClassField(entityClz);
 
-		CriteriaBuilder cb = getEm().getCriteriaBuilder();
-		CriteriaQuery<?> cq = cb.createQuery(entityClass);
-		Root root = cq.from(entityClass);
+		CriteriaBuilder cb = entityMgr.getCriteriaBuilder();
+		CriteriaQuery<?> cq = cb.createQuery(entityClz);
+		Root root = cq.from(entityClz);
 		column = (Map) jsonQuery.get("@column");
 		pageable = (Map) jsonQuery.get("@page");
 		sort = (LinkedHashMap) jsonQuery.get("@sort");
@@ -65,7 +67,7 @@ public class JpaJsonQuery<T> extends JpaQuery<T>{
 			FindUtils.buildSort(sort, cq, cb, root);
 		}
 
-		Query query = getEm().createQuery(cq);
+		Query query = entityMgr.createQuery(cq);
 
 		if (pageable != null) {
 			FindUtils.buildPage(query, pageable.get("page"), pageable.get("limit"));

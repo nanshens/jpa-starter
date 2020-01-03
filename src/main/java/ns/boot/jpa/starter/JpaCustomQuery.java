@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -20,10 +21,10 @@ import java.util.List;
  * @author ns
  */
 
-public class JpaCustomQuery<T> extends JpaQuery<T>{
+public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 	private CustomQuery<T> customQuery;
-	public JpaCustomQuery(Class<T> tClass) {
-		super(tClass);
+	protected JpaCustomQuery(Class<T> entityClz, EntityManager entityMgr) {
+		super(entityClz, entityMgr);
 		customQuery = new CustomQuery<>();
 	}
 
@@ -56,9 +57,9 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 	}
 
 	private TypedQuery<T> parser() {
-		CriteriaBuilder builder = getEm().getCriteriaBuilder();
-		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClass);
-		Root<T> root = criteriaQuery.from(entityClass);
+		CriteriaBuilder builder = entityMgr.getCriteriaBuilder();
+		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClz);
+		Root<T> root = criteriaQuery.from(entityClz);
 
 		Predicate predicate = customQuery.toPredicate(root, criteriaQuery, builder);
 
@@ -66,7 +67,7 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 			criteriaQuery.where(predicate);
 		}
 		criteriaQuery.select(root);
-		TypedQuery<T> query = getEm().createQuery(criteriaQuery);
+		TypedQuery<T> query = entityMgr.createQuery(criteriaQuery);
 
 		if (isPaged) {
 			query.setFirstResult((customQuery.getPage() - 1) * customQuery.getLimit())
@@ -77,9 +78,9 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 	}
 
 	private TypedQuery<Long> parserCount() {
-		CriteriaBuilder builder = getEm().getCriteriaBuilder();
+		CriteriaBuilder builder = entityMgr.getCriteriaBuilder();
 		CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
-		Root<T> root = criteriaQuery.from(entityClass);
+		Root<T> root = criteriaQuery.from(entityClz);
 
 		Predicate predicate = customQuery.toPredicate(root, criteriaQuery, builder);
 
@@ -87,7 +88,7 @@ public class JpaCustomQuery<T> extends JpaQuery<T>{
 			criteriaQuery.where(predicate);
 		}
 		criteriaQuery.select(builder.count(root));
-		return getEm().createQuery(criteriaQuery);
+		return entityMgr.createQuery(criteriaQuery);
 	}
 
 	private List<T> query() {

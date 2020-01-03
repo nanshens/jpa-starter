@@ -14,26 +14,19 @@ public class JpaQueryFactory {
 	@Autowired EntityManager entityManager;
 
 	public JpaSqlQuery createSqlQuery() {
-		JpaSqlQuery jpaSqlQuery = new JpaSqlQuery();
-		jpaSqlQuery.setEm(entityManager);
-		return jpaSqlQuery;
+		return new JpaSqlQuery(entityManager);
 	}
 
-	public <T> JpaSqlQuery<T> createSqlQuery(Class<T> tClass) {
-		JpaSqlQuery<T> jpaSqlQuery = new JpaSqlQuery<>(tClass);
-		jpaSqlQuery.setEm(entityManager);
-		return jpaSqlQuery;
+	public <T> JpaSqlQuery<T> createSqlQuery(Class<T> entityClz) {
+		return new JpaSqlQuery<>(entityClz, entityManager);
 	}
 
-	public <T> JpaJsonQuery<T> createJsonQuery(Class<T> tClass) {
-		JpaJsonQuery<T> jpaJsonQuery = new JpaJsonQuery<>(tClass);
-		jpaJsonQuery.setEm(entityManager);
-		return jpaJsonQuery;
+	public <T> JpaJsonQuery<T> createJsonQuery(Class<T> entityClz) {
+		return new JpaJsonQuery<>(entityClz, entityManager);
 	}
 
 	public <T> JpaCustomQuery<T> createCustomQuery(Class<T> tClass) {
 		JpaCustomQuery<T> jpaCustomQuery = new JpaCustomQuery<>(tClass);
-		jpaCustomQuery.setEm(entityManager);
 		return jpaCustomQuery;
 	}
 

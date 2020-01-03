@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.util.List;
 
@@ -12,15 +13,15 @@ import java.util.List;
  * @author ns
  */
 
-public class JpaSqlQuery<T> extends JpaQuery<T>{
+public class JpaSqlQuery<T> extends BaseJpaQuery<T>{
 	private String sqlQuery;
 
-	public JpaSqlQuery() {
-		super();
+	protected JpaSqlQuery(EntityManager entityMgr) {
+		super(entityMgr);
 	}
 
-	public JpaSqlQuery(Class<T> tClass) {
-		super(tClass);
+	protected JpaSqlQuery(Class<T> entityClz, EntityManager entityMgr) {
+		super(entityClz, entityMgr);
 	}
 
 	public JpaSqlQuery<T> input(String sqlQuery) {
@@ -36,8 +37,8 @@ public class JpaSqlQuery<T> extends JpaQuery<T>{
 	}
 
 	private List<T> query() {
-		Query query = entityClass == null ? getEm().createNativeQuery(sqlQuery) :
-				getEm().createNativeQuery(sqlQuery, entityClass);
+		Query query = entityClz == null ? entityMgr.createNativeQuery(sqlQuery) :
+				entityMgr.createNativeQuery(sqlQuery, entityClz);
 		return query.getResultList();
 	}
 
