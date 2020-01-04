@@ -108,11 +108,11 @@ public class CustomQuery<T> implements Specification<T> {
 		}
 		return predicate;
 	}
-	public Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Condition condition) {
+	private Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Condition condition) {
 		return condition == Condition.And ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
 	}
 
-	public Predicate buildPredicate(QueryFilter queryFilter, Root<T> root, CriteriaBuilder cb) {
+	private Predicate buildPredicate(QueryFilter queryFilter, Root<T> root, CriteriaBuilder cb) {
 		Path path = buildPath(queryFilter.getName(), root);
 		switch (queryFilter.getType()) {
 			case EQ:

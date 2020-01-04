@@ -162,7 +162,7 @@ public class FindUtils {
 	}
 
 	private static String clearSpecChar(String str) {
-		return str.replaceAll(reg, str);
+		return str.replaceAll(reg, "");
 	}
 
 	private static Object buildValue(Class fClass, Object o) throws ParseException {

@@ -60,7 +60,7 @@ public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 		jsonQuery.remove("@page");
 		jsonQuery.remove("@sort");
 		jsonQuery.remove("@column");
-		List<Predicate> predicates = FindUtils.buildPredicate(jsonQuery, cb, root, queryFields);
+		List<Predicate> predicates = FindUtils.buildPredicate(queryJsonMap, cb, root, queryFields);
 		cq.where(predicates.toArray(new Predicate[predicates.size()]));
 
 		if (sort != null) {

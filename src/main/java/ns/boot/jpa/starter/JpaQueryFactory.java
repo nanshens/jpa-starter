@@ -25,9 +25,8 @@ public class JpaQueryFactory {
 		return new JpaJsonQuery<>(entityClz, entityManager);
 	}
 
-	public <T> JpaCustomQuery<T> createCustomQuery(Class<T> tClass) {
-		JpaCustomQuery<T> jpaCustomQuery = new JpaCustomQuery<>(tClass);
-		return jpaCustomQuery;
+	public <T> JpaCustomQuery<T> createCustomQuery(Class<T> entityClz) {
+		return new JpaCustomQuery<>(entityClz, entityManager);
 	}
 
 }
