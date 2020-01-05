@@ -4,23 +4,18 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
-import ns.boot.jpa.starter.enums.ExceptionEnum;
-import ns.boot.jpa.starter.exception.JpaException;
-import ns.boot.jpa.starter.property.JpaStarterProperties;
 import ns.boot.jpa.starter.utils.FindUtils;
 import ns.boot.jpa.starter.utils.QueryUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +62,7 @@ public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 			FindUtils.buildSort(sort, cq, cb, root);
 		}
 
-		Query query = entityMgr.createQuery(cq);
+		TypedQuery query = entityMgr.createQuery(cq);
 
 		if (pageable != null) {
 			FindUtils.buildPage(query, pageable.get("page"), pageable.get("limit"));
