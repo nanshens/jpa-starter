@@ -13,12 +13,12 @@ import javax.persistence.EntityManager;
 public class JpaQueryFactory {
 	@Autowired EntityManager entityManager;
 
-	public JpaSqlQuery createSqlQuery() {
-		return new JpaSqlQuery(entityManager);
+	public JpaNativeSqlQuery createSqlQuery() {
+		return new JpaNativeSqlQuery(entityManager);
 	}
 
-	public <T> JpaSqlQuery<T> createSqlQuery(Class<T> entityClz) {
-		return new JpaSqlQuery<>(entityClz, entityManager);
+	public <T> JpaNativeSqlQuery<T> createSqlQuery(Class<T> entityClz) {
+		return new JpaNativeSqlQuery<>(entityClz, entityManager);
 	}
 
 	public <T> JpaJsonQuery<T> createJsonQuery(Class<T> entityClz) {

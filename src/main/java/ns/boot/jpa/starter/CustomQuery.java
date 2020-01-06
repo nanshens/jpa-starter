@@ -2,7 +2,7 @@ package ns.boot.jpa.starter;
 
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryOrder;
-import ns.boot.jpa.starter.enums.Condition;
+import ns.boot.jpa.starter.enums.ConditionEnum;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -22,23 +22,19 @@ import java.util.List;
 public class CustomQuery<T> implements Specification<T> {
 	private List<QueryFilter> filters = new ArrayList<>();
 	private List<QueryOrder> orders = new ArrayList<>();
-	private int page;
-	private int limit;
-
+	private Integer page;
+	private Integer limit;
 
 	protected int getPage() {
 		return page;
-	}
-
-	protected void setPage(int page) {
-		this.page = page;
 	}
 
 	protected int getLimit() {
 		return limit;
 	}
 
-	protected void setLimit(int limit) {
+	protected void setPageInfo(int page, int limit) {
+		this.page = page;
 		this.limit = limit;
 	}
 
@@ -48,7 +44,7 @@ public class CustomQuery<T> implements Specification<T> {
 				continue;
 			}
 //			queryFilter.setChildQuery(false);
-			queryFilter.setCondition(Condition.And);
+			queryFilter.setConditionEnum(ConditionEnum.AND);
 			filters.add(queryFilter);
 		}
 		return this;
@@ -60,7 +56,7 @@ public class CustomQuery<T> implements Specification<T> {
 				continue;
 			}
 //			queryFilter.setChildQuery(false);
-			queryFilter.setCondition(Condition.Or);
+			queryFilter.setConditionEnum(ConditionEnum.OR);
 			filters.add(queryFilter);
 		}
 		return this;
@@ -103,13 +99,13 @@ public class CustomQuery<T> implements Specification<T> {
 			if (i == 0){
 				predicate = buildPredicate(qf, root, cb);
 			} else {
-				predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
+				predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
 			}
 		}
 		return predicate;
 	}
-	private Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Condition condition) {
-		return condition == Condition.And ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
+	private Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, ConditionEnum conditionEnum) {
+		return conditionEnum == ConditionEnum.AND ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
 	}
 
 	private Predicate buildPredicate(QueryFilter queryFilter, Root<T> root, CriteriaBuilder cb) {

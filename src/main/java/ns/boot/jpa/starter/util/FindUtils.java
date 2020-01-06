@@ -1,4 +1,4 @@
-package ns.boot.jpa.starter.utils;
+package ns.boot.jpa.starter.util;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
@@ -107,8 +107,8 @@ public class FindUtils {
 		});
 	}
 
-	public static void buildPage(Query query, Integer page, Integer limit) throws JpaException{
-		if (page == null || limit == null){
+	public static void buildPage(Query query, int page, int limit) throws JpaException{
+		if (page < 0 || limit < 0){
 			throw new JpaException(ExceptionEnum.PAGE_ERROR.getMsg());
 		}
 		query.setFirstResult((page - 1) * limit)

@@ -40,8 +40,7 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	public CustomQuery<T> page(int page, int limit) {
-		customQuery.setLimit(limit);
-		customQuery.setPage(page);
+		customQuery.setPageInfo(page, limit);
 		isPaged = true;
 		return customQuery;
 	}
@@ -55,7 +54,8 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 		return customQuery;
 	}
 
-	private TypedQuery<T> parser() {
+	@Override
+	protected TypedQuery<T> parser() {
 		CriteriaBuilder builder = entityMgr.getCriteriaBuilder();
 		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClz);
 		Root<T> root = criteriaQuery.from(entityClz);
@@ -66,14 +66,7 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 			criteriaQuery.where(predicate);
 		}
 		criteriaQuery.select(root);
-		TypedQuery<T> query = entityMgr.createQuery(criteriaQuery);
-
-		if (isPaged) {
-			query.setFirstResult((customQuery.getPage() - 1) * customQuery.getLimit())
-					.setMaxResults(customQuery.getLimit());
-		}
-
-		return query;
+		return entityMgr.createQuery(criteriaQuery);
 	}
 
 	private TypedQuery<Long> parserCount() {
@@ -91,7 +84,12 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	private List<T> query() {
-		return parser().getResultList();
+		TypedQuery<T> query = parser();
+		if (isPaged) {
+			query.setFirstResult((customQuery.getPage() - 1) * customQuery.getLimit())
+					.setMaxResults(customQuery.getLimit());
+		}
+		return query.getResultList();
 	}
 
 	private Long queryCount() {

@@ -4,12 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
-import ns.boot.jpa.starter.utils.FindUtils;
-import ns.boot.jpa.starter.utils.QueryUtils;
+import ns.boot.jpa.starter.util.FindUtils;
+import ns.boot.jpa.starter.util.QueryUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 	private JSONObject jsonQuery;
 	private Map<String, List<String>> column;
-	private Map<String, Integer> pageable;
 	private Map<String, String> sort;
 
 	protected JpaJsonQuery(Class<T> entityClz, EntityManager entityMgr) {
@@ -40,32 +40,43 @@ public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 		return this;
 	}
 
-	private List<T> query() {
-
-		Map<String, Map> queryJsonMap = jsonQuery.toJavaObject(Map.class);
+	@Override
+	protected TypedQuery<T> parser() {
+		//		Map<String, Map> queryJsonMap = jsonQuery.toJavaObject(Map.class);
 		Map<String, Field> queryFields = QueryUtils.getClassField(entityClz);
 
 		CriteriaBuilder cb = entityMgr.getCriteriaBuilder();
-		CriteriaQuery<?> cq = cb.createQuery(entityClz);
-		Root root = cq.from(entityClz);
+		CriteriaQuery<T> cq = cb.createQuery(entityClz);
+		Root<T> root = cq.from(entityClz);
+		Map<String, Integer> pageable = (Map) jsonQuery.get("@page");
+
+		if (pageable != null) {
+			setPageInfo(pageable.get("page"), pageable.get("limit"));
+		}
+
 		column = (Map) jsonQuery.get("@column");
-		pageable = (Map) jsonQuery.get("@page");
 		sort = (LinkedHashMap) jsonQuery.get("@sort");
 
 		jsonQuery.remove("@page");
 		jsonQuery.remove("@sort");
 		jsonQuery.remove("@column");
-		List<Predicate> predicates = FindUtils.buildPredicate(queryJsonMap, cb, root, queryFields);
+
+		List<Predicate> predicates = FindUtils.buildPredicate(jsonQuery, cb, root, queryFields);
 		cq.where(predicates.toArray(new Predicate[predicates.size()]));
 
 		if (sort != null) {
 			FindUtils.buildSort(sort, cq, cb, root);
 		}
 
-		TypedQuery query = entityMgr.createQuery(cq);
+		return entityMgr.createQuery(cq);
+	}
 
-		if (pageable != null) {
-			FindUtils.buildPage(query, pageable.get("page"), pageable.get("limit"));
+	private List<T> query() {
+		TypedQuery<T> query = parser();
+		if (isPaged) {
+			query.setFirstResult((page - 1) * limit)
+					.setMaxResults(limit);
+//			FindUtils.buildPage(query, page, limit);
 		}
 		return query.getResultList();
 	}

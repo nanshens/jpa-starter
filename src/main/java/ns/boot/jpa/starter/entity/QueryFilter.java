@@ -1,11 +1,10 @@
 package ns.boot.jpa.starter.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ns.boot.jpa.starter.enums.Condition;
+import ns.boot.jpa.starter.enums.ConditionEnum;
 import ns.boot.jpa.starter.enums.MatchType;
-import ns.boot.jpa.starter.utils.QueryUtils;
+import ns.boot.jpa.starter.util.QueryUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +24,7 @@ public  class QueryFilter {
     private Object value;
     private MatchType type;
     private boolean childQuery;
-    private Condition condition;
+    private ConditionEnum conditionEnum;
 
 //    public QueryFilter(String name, Object value) {
 //        this.name = name;
