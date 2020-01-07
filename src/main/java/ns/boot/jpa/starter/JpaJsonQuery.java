@@ -8,9 +8,9 @@ import ns.boot.jpa.starter.util.FindUtils;
 import ns.boot.jpa.starter.util.QueryUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -71,6 +71,34 @@ public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 		return entityMgr.createQuery(cq);
 	}
 
+	@Override
+	protected TypedQuery<Long> parserCount() {
+		Map<String, Field> queryFields = QueryUtils.getClassField(entityClz);
+		CriteriaBuilder cb = entityMgr.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+		Root<T> root = cq.from(entityClz);
+
+		jsonQuery.remove("@page");
+		jsonQuery.remove("@sort");
+		jsonQuery.remove("@column");
+		List<Predicate> predicates = FindUtils.buildPredicate(jsonQuery, cb, root, queryFields);
+		cq.where(predicates.toArray(new Predicate[predicates.size()]));
+		cq.select(cb.count(root));
+
+		return entityMgr.createQuery(cq);
+	}
+
+	private Long queryCount() {
+		List<Long> totals = parserCount().getResultList();
+		long total = 0L;
+
+		for (Long element : totals) {
+			total += element == null ? 0 : element;
+		}
+
+		return total;
+	}
+
 	private List<T> query() {
 		TypedQuery<T> query = parser();
 		if (isPaged) {
@@ -100,7 +128,8 @@ public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 
 	@Override
 	public Page<T> resultPage() {
-		return new PageImpl<>(query());
+		return isPaged ? new PageImpl<>(query()) :
+				new PageImpl<>(query(), PageRequest.of(page, limit), queryCount());
 	}
 
 }

@@ -2,17 +2,13 @@ package ns.boot.jpa.starter;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import ns.boot.jpa.starter.constant.QueryConstant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -20,8 +16,6 @@ import java.util.List;
  */
 
 public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
-	private final static String LIMIT_INFO = "\blimit\\s*[0-9]\\d*\b";
-	private final static String OFFSET_INFO = "\boffset\\s*[0-9]\\d*\b";
 	private String nativeSql;
 	private String nativeSqlWithoutPageInfo;
 	protected JpaNativeSqlQuery(EntityManager entityMgr) {
@@ -35,8 +29,8 @@ public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
 	public JpaNativeSqlQuery<T> input(String nativeSql) {
 		this.nativeSql = nativeSql;
 		this.nativeSqlWithoutPageInfo = nativeSql
-				.replaceAll(LIMIT_INFO, "")
-				.replaceAll(OFFSET_INFO, "");
+				.replaceAll(QueryConstant.LIMIT_INFO, "")
+				.replaceAll(QueryConstant.OFFSET_INFO, "");
 		if (!nativeSql.isEmpty() && !nativeSql.equals(nativeSqlWithoutPageInfo)) {
 			// setPageInfo
 		}
@@ -46,8 +40,8 @@ public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
 	public JpaNativeSqlQuery<T> page(int page, int limit) {
 		setPageInfo(page, limit);
 		this.nativeSql = nativeSql
-				.replaceAll(LIMIT_INFO, "limit " + limit)
-				.replaceAll(OFFSET_INFO, "offset " + limit * (page - 1));
+				.replaceAll(QueryConstant.LIMIT_INFO, "limit " + limit)
+				.replaceAll(QueryConstant.OFFSET_INFO, "offset " + limit * (page - 1));
 		return this;
 	}
 	public List<T> cache() {
@@ -60,14 +54,19 @@ public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
 				entityMgr.createNativeQuery(nativeSql, entityClz);
 	}
 
+	@Override
+	protected Query parserCount() {
+		String countSql = nativeSqlWithoutPageInfo.replaceAll("select.*from", "select count(1) from");
+		return entityMgr.createNativeQuery(countSql, Long.class);
+	}
+
 	private List<T> query() {
 		Query query = parser();
 		return query.getResultList();
 	}
 
 	private Long queryCount() {
-		String countSql = nativeSqlWithoutPageInfo.replaceAll("select.*from", "select count(1) from");
-		Query query = entityMgr.createNativeQuery(countSql, Long.class);
+		Query query = parserCount();
 		return (Long) query.getResultList().get(0);
 	}
 

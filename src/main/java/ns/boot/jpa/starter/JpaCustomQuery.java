@@ -69,7 +69,8 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 		return entityMgr.createQuery(criteriaQuery);
 	}
 
-	private TypedQuery<Long> parserCount() {
+	@Override
+	protected TypedQuery<Long> parserCount() {
 		CriteriaBuilder builder = entityMgr.getCriteriaBuilder();
 		CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
 		Root<T> root = criteriaQuery.from(entityClz);

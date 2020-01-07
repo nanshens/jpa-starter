@@ -33,6 +33,7 @@ public abstract class BaseJpaQuery<T> {
 	}
 
 	protected abstract <Q extends Query> Q parser();
+	protected abstract <Q extends Query> Q parserCount();
 	public abstract JSON resultJson();
 	public abstract List<T> resultList();
 	public abstract Page<T> resultPage();
