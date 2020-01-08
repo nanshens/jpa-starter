@@ -50,7 +50,7 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 		return this;
 	}
 
-	public CustomQuery<T> buildSpecification(){
+	public CustomQuery<T> getCustomQuery(){
 		return customQuery;
 	}
 
