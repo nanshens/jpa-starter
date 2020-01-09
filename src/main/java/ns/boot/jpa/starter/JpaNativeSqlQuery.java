@@ -39,11 +39,20 @@ public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
 
 	public JpaNativeSqlQuery<T> page(int page, int limit) {
 		setPageInfo(page, limit);
-		this.nativeSql = nativeSql
-				.replaceAll(QueryConstant.LIMIT_INFO, "limit " + limit)
-				.replaceAll(QueryConstant.OFFSET_INFO, "offset " + limit * (page - 1));
+		if (nativeSql.contains(";")) {
+			if (!nativeSql.contains("limit") && !nativeSql.contains("offset")) {
+				this.nativeSql = nativeSql.replace(";", " limit " + limit + " offset " + limit * (page - 1));
+			} else {
+				this.nativeSql = nativeSql
+						.replaceAll(QueryConstant.LIMIT_INFO, "limit " + limit)
+						.replaceAll(QueryConstant.OFFSET_INFO, "offset " + limit * (page - 1));
+			}
+		} else {
+			this.nativeSql = nativeSql.concat(" limit " + limit + " offset " + limit * (page - 1));
+		}
 		return this;
 	}
+
 	public List<T> cache() {
 		return null;
 	}
