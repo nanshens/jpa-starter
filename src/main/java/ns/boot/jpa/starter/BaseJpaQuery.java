@@ -32,6 +32,7 @@ public abstract class BaseJpaQuery<T> {
 		isPaged = true;
 	}
 
+	public abstract List<T> cache();
 	protected abstract <Q extends Query> Q parser();
 	protected abstract <Q extends Query> Q parserCount();
 	public abstract JSON resultJson();
