@@ -55,6 +55,11 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	@Override
+	public List<T> cache() {
+		return null;
+	}
+
+	@Override
 	protected TypedQuery<T> parser() {
 		CriteriaBuilder builder = entityMgr.getCriteriaBuilder();
 		CriteriaQuery<T> criteriaQuery = builder.createQuery(entityClz);

@@ -53,6 +53,7 @@ public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
 		return this;
 	}
 
+	@Override
 	public List<T> cache() {
 		return null;
 	}
