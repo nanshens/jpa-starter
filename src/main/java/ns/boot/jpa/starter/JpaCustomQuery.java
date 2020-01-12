@@ -15,6 +15,8 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author ns
@@ -52,11 +54,6 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 
 	public CustomQuery<T> getCustomQuery(){
 		return customQuery;
-	}
-
-	@Override
-	public List<T> cache() {
-		return null;
 	}
 
 	@Override

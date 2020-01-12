@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author ns
@@ -32,7 +34,9 @@ public abstract class BaseJpaQuery<T> {
 		isPaged = true;
 	}
 
-	public abstract List<T> cache();
+	public List<T> cache(Supplier<List<T>> customCacheSupplier){
+		return customCacheSupplier.get();
+	}
 	protected abstract <Q extends Query> Q parser();
 	protected abstract <Q extends Query> Q parserCount();
 	public abstract JSON resultJson();

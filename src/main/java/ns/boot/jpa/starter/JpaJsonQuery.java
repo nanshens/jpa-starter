@@ -41,11 +41,6 @@ public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	@Override
-	public List<T> cache() {
-		return null;
-	}
-
-	@Override
 	protected TypedQuery<T> parser() {
 		//		Map<String, Map> queryJsonMap = jsonQuery.toJavaObject(Map.class);
 		Map<String, Field> queryFields = QueryUtils.getClassField(entityClz);

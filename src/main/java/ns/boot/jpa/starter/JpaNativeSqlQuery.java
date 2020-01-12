@@ -54,11 +54,6 @@ public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	@Override
-	public List<T> cache() {
-		return null;
-	}
-
-	@Override
 	protected Query parser() {
 		return entityClz == null ? entityMgr.createNativeQuery(nativeSql) :
 				entityMgr.createNativeQuery(nativeSql, entityClz);
