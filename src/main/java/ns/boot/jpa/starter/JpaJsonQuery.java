@@ -100,6 +100,9 @@ public class JpaJsonQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	private List<T> query() {
+		if (getCacheResult().size() > 0) {
+			return getCacheResult();
+		}
 		TypedQuery<T> query = parser();
 		if (isPaged) {
 			query.setFirstResult((page - 1) * limit)

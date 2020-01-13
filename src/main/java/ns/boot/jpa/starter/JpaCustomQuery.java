@@ -15,8 +15,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * @author ns
@@ -87,6 +85,9 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	private List<T> query() {
+		if (getCacheResult().size() > 0) {
+			return getCacheResult();
+		}
 		TypedQuery<T> query = parser();
 		if (isPaged) {
 			query.setFirstResult((customQuery.getPage() - 1) * customQuery.getLimit())
