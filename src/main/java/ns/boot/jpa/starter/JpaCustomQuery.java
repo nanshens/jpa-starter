@@ -97,6 +97,9 @@ public class JpaCustomQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	private Long queryCount() {
+		if (getCacheResult().size() > 0) {
+			return (long) getCacheResult().size();
+		}
 		List<Long> totals = parserCount().getResultList();
 		long total = 0L;
 

@@ -74,6 +74,9 @@ public class JpaNativeSqlQuery<T> extends BaseJpaQuery<T>{
 	}
 
 	private Long queryCount() {
+		if (getCacheResult().size() > 0) {
+			return (long) getCacheResult().size();
+		}
 		Query query = parserCount();
 		return (Long) query.getResultList().get(0);
 	}
