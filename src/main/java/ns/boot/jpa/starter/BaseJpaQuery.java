@@ -5,7 +5,9 @@ import org.springframework.data.domain.Page;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -35,7 +37,7 @@ public abstract class BaseJpaQuery<T> {
 	}
 
 	protected List<T> getCacheResult() {
-		return cacheSupplier.get();
+		return cacheSupplier == null ? new ArrayList<>() : cacheSupplier.get();
 	}
 
 	public <Q extends BaseJpaQuery<T>> Q cache(Supplier<List<T>> cacheSupplier){
