@@ -36,17 +36,6 @@ import java.util.stream.Collectors;
 
 public class FindUtils {
 
-	private final static String EQ= "=";
-	private final static String NOT = "!";
-	private final static String LIKE = "~";
-	private final static String GT = ">";
-	private final static String GE = ">=";
-	private final static String LT = "<";
-	private final static String LE = "<=";
-	private final static String AND = "&";
-
-	private final static String reg = "[\\!\\=\\<\\>\\&\\|\\~]+";
-
 	public static List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) throws JpaException {
 		Stack<String> fields = new Stack<>();
 		fields.addAll(fieldMap.keySet());
