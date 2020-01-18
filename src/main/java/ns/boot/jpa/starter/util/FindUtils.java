@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
+import static ns.boot.jpa.starter.constant.QueryConstant.*;
 
 /**
  * @author ns
@@ -151,7 +152,7 @@ public class FindUtils {
 	}
 
 	private static String clearSpecChar(String str) {
-		return str.replaceAll(reg, "");
+		return str.replaceAll(SPECIAL_SYMBOL_REGEX, "");
 	}
 
 	private static Object buildValue(Class fClass, Object o) throws ParseException {
