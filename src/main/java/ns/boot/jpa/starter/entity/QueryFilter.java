@@ -66,43 +66,31 @@ public  class QueryFilter {
     }
 
     public static QueryFilter startLike(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, "%" + value, MatchType.LIKE);
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value, MatchType.LIKE);
     }
 
     public static QueryFilter startLikeIgnoreCase(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, "%" + value.toLowerCase(), MatchType.LIKE_IG_CASE);
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase(), MatchType.LIKE_IG_CASE);
     }
     public static QueryFilter endLike(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, value + "%", MatchType.LIKE);
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : value + "%", MatchType.LIKE);
     }
 
     public static QueryFilter endLikeIgnoreCase(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
     public static QueryFilter allLike(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, "%" + value + "%", MatchType.LIKE);
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value + "%", MatchType.LIKE);
     }
 
     public static QueryFilter allLikeIgnoreCase(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, "%" + value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
 
     public static QueryFilter in(String name, Object... valueList){

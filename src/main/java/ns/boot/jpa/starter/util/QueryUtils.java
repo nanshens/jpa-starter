@@ -22,7 +22,13 @@ import java.util.Stack;
 public class QueryUtils {
     public enum StringEnums{upper,lower}
 
-    public static boolean isNullOrEmpty(Object o) {
+    public static void format(String value) {
+        if (value == null || "null".equals(value)) {
+            value = "";
+        }
+    }
+
+    public static boolean isNull(Object o) {
         if (o == null) {
             return true;
         }
