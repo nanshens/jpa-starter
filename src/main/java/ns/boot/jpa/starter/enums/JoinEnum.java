@@ -6,7 +6,7 @@ import java.util.EnumSet;
  * @author zn
  */
 
-public enum JoinParams {
+public enum JoinEnum {
 	Default("join"),
 	List("joinList"),
 	Set("joinSet"),
@@ -14,7 +14,7 @@ public enum JoinParams {
 
 	private String rootName;
 
-	JoinParams(String rootName) {
+	JoinEnum(String rootName) {
 		this.rootName = rootName;
 	}
 
@@ -22,7 +22,7 @@ public enum JoinParams {
 		return rootName;
 	}
 
-	public static EnumSet<JoinParams> getAllJoinParams() {
-		return EnumSet.allOf(JoinParams.class);
+	public static EnumSet<JoinEnum> getAllJoinParams() {
+		return EnumSet.allOf(JoinEnum.class);
 	}
 }

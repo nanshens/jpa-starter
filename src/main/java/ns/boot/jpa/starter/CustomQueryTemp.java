@@ -4,17 +4,14 @@ import lombok.SneakyThrows;
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryJoin;
 import ns.boot.jpa.starter.entity.QueryOrder;
-import ns.boot.jpa.starter.enums.Condition;
-import ns.boot.jpa.starter.enums.JoinParams;
-import ns.boot.jpa.starter.enums.MatchType;
-import ns.boot.jpa.starter.utils.QueryUtils;
+import ns.boot.jpa.starter.enums.ConditionEnum;
+import ns.boot.jpa.starter.util.QueryUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
@@ -30,7 +27,7 @@ import java.util.Objects;
  * @author acer
  * @date 2018/7/30
  */
-public class JpaQuery<T> implements Specification<T> {
+public class CustomQueryTemp<T> implements Specification<T> {
 
 	private List<QueryFilter> andFilters = new ArrayList<>();
 	private List<QueryFilter> orFilters = new ArrayList<>();
@@ -41,17 +38,13 @@ public class JpaQuery<T> implements Specification<T> {
 //	private static Map<Enum, Method> parseJoinMap = new HashMap<>();
 	private Map<String, Object> queryInfo;
 
-//	static {
-//		initParseMap();
-//	}
-
-	public JpaQuery<T> and(QueryFilter... queryFilters) {
+	public CustomQueryTemp<T> and(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			if (Objects.isNull(queryFilter.getValue())) {
 				continue;
 			}
 			queryFilter.setChildQuery(false);
-			queryFilter.setCondition(Condition.And);
+			queryFilter.setConditionEnum(ConditionEnum.AND);
 			whereFilters.add(queryFilter);
 		}
 
@@ -59,124 +52,124 @@ public class JpaQuery<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQuery<T> or(QueryFilter... queryFilters) {
+	public CustomQueryTemp<T> or(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			if (Objects.isNull(queryFilter.getValue())) {
 				continue;
 			}
 			queryFilter.setChildQuery(false);
-			queryFilter.setCondition(Condition.Or);
+			queryFilter.setConditionEnum(ConditionEnum.OR);
 			whereFilters.add(queryFilter);
 		}
 		orFilters.addAll(Arrays.asList(queryFilters));
 		return this;
 	}
 
-	public JpaQuery<T> childAnd(QueryFilter... queryFilters) {
+	public CustomQueryTemp<T> childAnd(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			queryFilter.setChildQuery(true);
-			queryFilter.setCondition(Condition.And);
+			queryFilter.setConditionEnum(ConditionEnum.AND);
 			whereFilters.add(queryFilter);
 		}
 		return this;
 	}
 
-	public JpaQuery<T> childOr(QueryFilter... queryFilters) {
+	public CustomQueryTemp<T> childOr(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
 			queryFilter.setChildQuery(true);
-			queryFilter.setCondition(Condition.Or);
+			queryFilter.setConditionEnum(ConditionEnum.OR);
 			whereFilters.add(queryFilter);
 		}
 		return this;
 	}
 
-	public JpaQuery<T> leftJoin(String tableName) {
+	public CustomQueryTemp<T> leftJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> leftListJoin(String tableName) {
+	public CustomQueryTemp<T> leftListJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftListJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> leftSetJoin(String tableName) {
+	public CustomQueryTemp<T> leftSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftSetJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> leftMapJoin(String tableName) {
+	public CustomQueryTemp<T> leftMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.leftMapJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> rightJoin(String tableName) {
+	public CustomQueryTemp<T> rightJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> rightListJoin(String tableName) {
+	public CustomQueryTemp<T> rightListJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightListJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> rightSetJoin(String tableName) {
+	public CustomQueryTemp<T> rightSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightSetJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> rightMapJoin(String tableName) {
+	public CustomQueryTemp<T> rightMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.rightMapJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> innerJoin(String tableName) {
+	public CustomQueryTemp<T> innerJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> innerListJoin(String tableName) {
+	public CustomQueryTemp<T> innerListJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerListJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> innerSetJoin(String tableName) {
+	public CustomQueryTemp<T> innerSetJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerSetJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> innerMapJoin(String tableName) {
+	public CustomQueryTemp<T> innerMapJoin(String tableName) {
 		joinFilters.add(QueryJoin.innerMapJoin(tableName));
 		return this;
 	}
 
-	public JpaQuery<T> order(QueryOrder... orders) {
+	public CustomQueryTemp<T> order(QueryOrder... orders) {
 		queryOrders.addAll(Arrays.asList(orders));
 		return this;
 	}
 
-	public JpaQuery<T> clearAllFilters() {
+	public CustomQueryTemp<T> clearAllFilters() {
 		clearAndFilters();
 		clearOrFilters();
 		return this;
 	}
 
-	public JpaQuery<T> clearAndFilters() {
+	public CustomQueryTemp<T> clearAndFilters() {
 		andFilters.clear();
 		return this;
 	}
 
-	public JpaQuery<T> clearOrFilters() {
+	public CustomQueryTemp<T> clearOrFilters() {
 		orFilters.clear();
 		return this;
 	}
 
-	public JpaQuery<T> clearOrders() {
+	public CustomQueryTemp<T> clearOrders() {
 		queryOrders.clear();
 		return this;
 	}
 
-	public JpaQuery<T> addQueryInfo(Object o) {
+	public CustomQueryTemp<T> addQueryInfo(Object o) {
 		return this;
 	}
 
@@ -188,21 +181,21 @@ public class JpaQuery<T> implements Specification<T> {
 //		return this;
 //	}
 
-	public JpaQuery<T> removeFiltersIn(String... names) {
+	public CustomQueryTemp<T> removeFiltersIn(String... names) {
 		for (String name : names) {
 			whereFilters.removeIf(af -> af.getName().equals(name));
 		}
 		return this;
 	}
 
-	public JpaQuery<T> removeFiltersEx(String... names) {
+	public CustomQueryTemp<T> removeFiltersEx(String... names) {
 		for (String name : names) {
 			whereFilters.removeIf(af -> !af.getName().equals(name));
 		}
 		return this;
 	}
 
-	public JpaQuery<T> rmAndFilter(String name, int index) {
+	public CustomQueryTemp<T> rmAndFilter(String name, int index) {
 		List<Integer> ids = new ArrayList<>();
 		for (int i = 0; i < andFilters.size(); i++) {
 			if (andFilters.get(i).getName().equals(name)) {
@@ -213,7 +206,7 @@ public class JpaQuery<T> implements Specification<T> {
 		return this;
 	}
 
-	public JpaQuery<T> rmOrFilter(String name, int index) {
+	public CustomQueryTemp<T> rmOrFilter(String name, int index) {
 		List<Integer> ids = new ArrayList<>();
 		for (int i = 0; i < orFilters.size(); i++) {
 			if (orFilters.get(i).getName().equals(name)) {
@@ -224,14 +217,14 @@ public class JpaQuery<T> implements Specification<T> {
 		return this;
 	}
 
-	private JpaQuery<T> removeNullFilters() {
+	private CustomQueryTemp<T> removeNullFilters() {
 //		andFilters.removeIf(af -> af.getValue().equals(null) || af.getValue().equals(""));
 //		orFilters.removeIf(of -> of.getValue().equals(null) || of.getValue().equals(""));
 		whereFilters.removeIf(wf -> wf.getValue().equals(null) || wf.getValue().equals("") || wf.getValue().equals("%%"));
 		return this;
 	}
 
-	public JpaQuery(Object object) {
+	public CustomQueryTemp(Object object) {
 //		queryInfoObject = object;
 //		getPageInfo(object);
 //		buildQueryParams(object);
@@ -240,7 +233,7 @@ public class JpaQuery<T> implements Specification<T> {
 		queryInfo = QueryUtils.objectMap(object);
 	}
 
-	public JpaQuery() {
+	public CustomQueryTemp() {
 	}
 
 //	@SneakyThrows
@@ -292,7 +285,7 @@ public class JpaQuery<T> implements Specification<T> {
 	private Predicate buildPredicate(Root<T> root, CriteriaBuilder cb) {
 		Predicate predicate = null;
 		Predicate childPredicate = null;
-		Condition childCondition = null;
+		ConditionEnum childConditionEnum = null;
 		for (int i = 0; i < whereFilters.size(); i++) {
 			QueryFilter qf = whereFilters.get(i);
 			if (i == 0) {
@@ -301,25 +294,25 @@ public class JpaQuery<T> implements Specification<T> {
 				QueryFilter lastqf = whereFilters.get(i - 1);
 				if (qf.isChildQuery()) {
 					if (!lastqf.isChildQuery()) {
-						childCondition = lastqf.getCondition();
+						childConditionEnum = lastqf.getConditionEnum();
 						childPredicate = buildPredicate(qf, root, cb);
 					} else {
-						if (lastqf.getCondition() == qf.getCondition()) {
-							childPredicate = selectCondition(childPredicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
+						if (lastqf.getConditionEnum() == qf.getConditionEnum()) {
+							childPredicate = selectCondition(childPredicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
 						}else {
 //							childand -childor
 						}
 						if (i == whereFilters.size() - 1) {
-							predicate = selectCondition(predicate, childPredicate, cb, childCondition);
+							predicate = selectCondition(predicate, childPredicate, cb, childConditionEnum);
 						}
 					}
 				}else{
 					if (lastqf.isChildQuery()) {
-						predicate = selectCondition(predicate, childPredicate, cb, childCondition);
-						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
+						predicate = selectCondition(predicate, childPredicate, cb, childConditionEnum);
+						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
 						childPredicate = null;
 					}else {
-						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getCondition());
+						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
 					}
 				}
 			}
@@ -327,14 +320,14 @@ public class JpaQuery<T> implements Specification<T> {
 		return predicate;
 	}
 
-	public Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Condition condition) {
-		return condition == Condition.And ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
+	public Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, ConditionEnum conditionEnum) {
+		return conditionEnum == ConditionEnum.AND ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
 	}
 
 	private Predicate chooseOrAnd(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Enum type) {
 		return basicPredicate == null ?
 				newPredicate :
-				type == Condition.And ?
+				type == ConditionEnum.AND ?
 						cb.and(basicPredicate, newPredicate) :
 						cb.or(basicPredicate, newPredicate);
 	}

@@ -1,20 +1,10 @@
 package ns.boot.jpa.starter.enums;
 
-import lombok.SneakyThrows;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Path;
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.EnumSet;
-
 /**
  * @author zn
  */
 
 public enum MatchType {
-
     EQ,
     EQ_IG_CASE,
     NE,

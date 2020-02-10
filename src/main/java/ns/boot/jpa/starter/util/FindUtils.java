@@ -1,4 +1,4 @@
-package ns.boot.jpa.starter.utils;
+package ns.boot.jpa.starter.util;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
@@ -29,23 +29,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
+import static ns.boot.jpa.starter.constant.QueryConstant.*;
 
 /**
  * @author ns
  */
 
 public class FindUtils {
-
-	private final static String EQ= "=";
-	private final static String NOT = "!";
-	private final static String LIKE = "~";
-	private final static String GT = ">";
-	private final static String GE = ">=";
-	private final static String LT = "<";
-	private final static String LE = "<=";
-	private final static String AND = "&";
-
-	private final static String reg = "[\\!\\=\\<\\>\\&\\|\\~]+";
 
 	public static List<Predicate> buildPredicate(Map fieldMap, CriteriaBuilder cb, Root<?> root, Map<String, Field> queryFields) throws JpaException {
 		Stack<String> fields = new Stack<>();
@@ -107,8 +97,8 @@ public class FindUtils {
 		});
 	}
 
-	public static void buildPage(Query query, Integer page, Integer limit) throws JpaException{
-		if (page == null || limit == null){
+	public static void buildPage(Query query, int page, int limit) throws JpaException{
+		if (page < 0 || limit < 0){
 			throw new JpaException(ExceptionEnum.PAGE_ERROR.getMsg());
 		}
 		query.setFirstResult((page - 1) * limit)
@@ -162,7 +152,7 @@ public class FindUtils {
 	}
 
 	private static String clearSpecChar(String str) {
-		return str.replaceAll(reg, str);
+		return str.replaceAll(SPECIAL_SYMBOL_REGEX, "");
 	}
 
 	private static Object buildValue(Class fClass, Object o) throws ParseException {

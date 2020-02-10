@@ -1,8 +1,6 @@
-package ns.boot.jpa.starter.utils;
+package ns.boot.jpa.starter.util;
 
 import lombok.SneakyThrows;
-import ns.boot.jpa.starter.annotations.QueryOrderDire;
-import ns.boot.jpa.starter.annotations.QueryType;
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryOrder;
 import org.springframework.data.domain.Sort;
@@ -24,7 +22,17 @@ import java.util.Stack;
 public class QueryUtils {
     public enum StringEnums{upper,lower}
 
-    public static boolean isNullOrEmpty(Object o) {
+    public static void format(String value) {
+        if (value == null || "null".equals(value)) {
+            value = "";
+        }
+    }
+
+    public static boolean isNull(String str) {
+        return "".equals(str) || "%".equals(str) || "%%".equals(str);
+    }
+
+    public static boolean isNull(Object o) {
         if (o == null) {
             return true;
         }
@@ -98,35 +106,12 @@ public class QueryUtils {
             Object po = object.pop();
             String pre = prefix.pop();
             if (po == null) continue;
-//            String prefixs = po == o ? "" : changeFirstChar(po.getClass().getSimpleName(), StringEnums.lower) + ".";
 
             if (isBaseType(s.getType())) {
                 Object v = getValue(s.getName(), po);
                 String n = pre + s.getName();
                 if (v == null || "page".equals(n) || "limit".equals(n)) continue;
 
-                QueryType queryType = s.getAnnotation(QueryType.class);
-                QueryOrderDire queryOrderDire = s.getAnnotation(QueryOrderDire.class);
-
-                if ("orderDesc".equals(n) || (queryOrderDire != null && queryOrderDire.value() == Sort.Direction.DESC)) {
-                    for (String od : ((List<String>) v)) {
-                        qo.add(QueryOrder.desc(od));
-                    }
-                    continue;
-                }
-
-                if ("orderAsc".equals(n) || (queryOrderDire != null && queryOrderDire.value() == Sort.Direction.ASC)) {
-                    for (String oa : ((List<String>) v)) {
-                        qo.add(QueryOrder.asc(oa));
-                    }
-                    continue;
-                }
-
-                if (queryType != null) {
-                    afs.add(new QueryFilter(n, v, queryType.value()));
-                }else {
-                    afs.add(QueryFilter.ge(n, v));
-                }
             } else {
                 for (Field field : QueryUtils.getAllFields(s.getType(), new ArrayList<>())) {
                     stack.push(field);

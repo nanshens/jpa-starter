@@ -2,12 +2,15 @@ package ns.boot.jpa.starter.result;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author nanshen
  */
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Result {
 	enum ResultEnum{SUCCESS, FAIL}
 
@@ -25,4 +28,11 @@ public class Result {
 		code = ResultEnum.FAIL;
 	}
 
+	public static Result success(Object data) {
+		return new Result(data, null, ResultEnum.SUCCESS);
+	}
+
+	public static Result failure(Object data, String msg) {
+		return new Result(data, msg, ResultEnum.FAIL);
+	}
 }

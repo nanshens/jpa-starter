@@ -1,5 +1,6 @@
 package ns.boot.jpa.starter.configure;
 
+import ns.boot.jpa.starter.JpaQueryFactory;
 import ns.boot.jpa.starter.property.JpaStarterProperties;
 import ns.boot.jpa.starter.service.FindService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -13,14 +14,20 @@ import org.springframework.context.annotation.Configuration;
  * @author nanshen
  */
 @Configuration
-@ConditionalOnClass(FindService.class)
+@ConditionalOnClass(value = {JpaQueryFactory.class, FindService.class})
 @ConditionalOnWebApplication
 @EnableConfigurationProperties(JpaStarterProperties.class)
 public class AutoConfigure {
 
 	@Bean
 	@ConditionalOnMissingBean
-	FindService findService() {
+	JpaQueryFactory getJpaQueryFactory() {
+		return new JpaQueryFactory();
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	FindService getFindService() {
 		return new FindService();
 	}
 }

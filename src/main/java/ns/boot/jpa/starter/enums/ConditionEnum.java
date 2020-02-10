@@ -4,6 +4,6 @@ package ns.boot.jpa.starter.enums;
  * @author ns
  */
 
-public enum Condition {
-	And,Or
+public enum ConditionEnum {
+	AND,OR
 }

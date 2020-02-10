@@ -1,11 +1,10 @@
 package ns.boot.jpa.starter.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ns.boot.jpa.starter.enums.Condition;
+import ns.boot.jpa.starter.enums.ConditionEnum;
 import ns.boot.jpa.starter.enums.MatchType;
-import ns.boot.jpa.starter.utils.QueryUtils;
+import ns.boot.jpa.starter.util.QueryUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,8 +23,8 @@ public  class QueryFilter {
     private String name;
     private Object value;
     private MatchType type;
-    private boolean childQuery;
-    private Condition condition;
+    private int subQueryNumber;
+    private ConditionEnum conditionEnum;
 
 //    public QueryFilter(String name, Object value) {
 //        this.name = name;
@@ -66,18 +65,32 @@ public  class QueryFilter {
         return new QueryFilter(name, value, MatchType.LE);
     }
 
-    public static QueryFilter like(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, "%"+value+"%", MatchType.LIKE);
+    public static QueryFilter startLike(String name, String value){
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value, MatchType.LIKE);
     }
 
-    public static QueryFilter likeIgnoreCase(String name, String value){
-        if (QueryUtils.isNullOrEmpty(value)){
-            value = "";
-        }
-        return new QueryFilter(name, "%"+value.toLowerCase()+"%", MatchType.LIKE_IG_CASE);
+    public static QueryFilter startLikeIgnoreCase(String name, String value){
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase(), MatchType.LIKE_IG_CASE);
+    }
+    public static QueryFilter endLike(String name, String value){
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : value + "%", MatchType.LIKE);
+    }
+
+    public static QueryFilter endLikeIgnoreCase(String name, String value){
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
+    }
+    public static QueryFilter allLike(String name, String value){
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value + "%", MatchType.LIKE);
+    }
+
+    public static QueryFilter allLikeIgnoreCase(String name, String value){
+        QueryUtils.format(value);
+        return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
 
     public static QueryFilter in(String name, Object... valueList){

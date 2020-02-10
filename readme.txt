@@ -138,3 +138,50 @@ jpaquery
 						QueryFilter.eq("address.id", "1"));
 
 
+    @Test
+	public void method() {
+		Specification<SalesOrder> specification4 = (Specification<SalesOrder>) (root, query, cb) -> {
+			Predicate parentPredicate;
+			Predicate conPredicate = cb.conjunction();
+			conPredicate.getExpressions().add(cb.equal(root.get("name"), "12312"));
+
+			Predicate disPredicate = cb.disjunction();
+			disPredicate.getExpressions().add(cb.equal(root.get("id"), "12312"));
+			disPredicate.getExpressions().add(cb.equal(root.get("code"), "12312"));
+
+			parentPredicate = cb.and(conPredicate, disPredicate);
+			return parentPredicate;
+		};
+
+		Specification<SalesOrder> specification5 = (Specification<SalesOrder>) (root, query, cb) -> {
+			Predicate parentPredicate;
+			Predicate conPredicate = cb.conjunction();
+			conPredicate.getExpressions().add(cb.equal(root.get("id"), "12312"));
+			conPredicate.getExpressions().add(cb.equal(root.get("code"), "12312"));
+
+			Predicate disPredicate = cb.conjunction();
+			disPredicate.getExpressions().add(cb.equal(root.get("createBy"), "12312"));
+			disPredicate.getExpressions().add(cb.equal(root.get("modifyBy"), "12312"));
+
+			parentPredicate = cb.or(cb.equal(root.get("id"), "12312"), conPredicate, disPredicate, cb.equal(root.get("code"), "12312"));
+			return parentPredicate;
+		};
+
+		Specification<SalesOrder> specification6 = (Specification<SalesOrder>) (root, query, cb) -> {
+			Predicate parentPredicate;
+			Predicate conPredicate = cb.disjunction();
+			conPredicate.getExpressions().add(cb.equal(root.get("id"), "12312"));
+			conPredicate.getExpressions().add(cb.equal(root.get("code"), "12312"));
+
+			Predicate disPredicate = cb.conjunction();
+			disPredicate.getExpressions().add(cb.equal(root.get("createBy"), "12312"));
+			disPredicate.getExpressions().add(cb.equal(root.get("modifyBy"), "12312"));
+
+			disPredicate = cb.and(disPredicate, conPredicate);
+
+			parentPredicate = cb.or(cb.equal(root.get("code"), "12312"), disPredicate);
+			return parentPredicate;
+		};
+		List<SalesOrder> salesOrders = salesOrderRepo.findAll(specification6);
+		System.out.println(salesOrders.size());
+	}
