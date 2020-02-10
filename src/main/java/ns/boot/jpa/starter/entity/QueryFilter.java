@@ -23,7 +23,7 @@ public  class QueryFilter {
     private String name;
     private Object value;
     private MatchType type;
-    private boolean childQuery;
+    private int subQueryNumber;
     private ConditionEnum conditionEnum;
 
 //    public QueryFilter(String name, Object value) {

@@ -3,6 +3,7 @@ package ns.boot.jpa.starter;
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryOrder;
 import ns.boot.jpa.starter.enums.ConditionEnum;
+import ns.boot.jpa.starter.util.QueryUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -24,6 +25,7 @@ public class CustomQuery<T> implements Specification<T> {
 	private List<QueryOrder> orders = new ArrayList<>();
 	private Integer page;
 	private Integer limit;
+	private int subQueryNumber = 1;
 
 	protected int getPage() {
 		return page;
@@ -40,24 +42,46 @@ public class CustomQuery<T> implements Specification<T> {
 
 	public CustomQuery<T> and(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
-			if ("".equals(queryFilter.getValue()) && "%%".equals(queryFilter.getValue())) {
-				continue;
+			if (!QueryUtils.isNull(queryFilter.getValue())) {
+				queryFilter.setSubQueryNumber(0);
+				queryFilter.setConditionEnum(ConditionEnum.AND);
+				filters.add(queryFilter);
 			}
-//			queryFilter.setChildQuery(false);
-			queryFilter.setConditionEnum(ConditionEnum.AND);
-			filters.add(queryFilter);
 		}
 		return this;
 	}
 
 	public CustomQuery<T> or(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
-			if ("".equals(queryFilter.getValue()) && "%%".equals(queryFilter.getValue())) {
-				continue;
+			if (!QueryUtils.isNull(queryFilter.getValue())) {
+				queryFilter.setSubQueryNumber(0);
+				queryFilter.setConditionEnum(ConditionEnum.OR);
+				filters.add(queryFilter);
 			}
-//			queryFilter.setChildQuery(false);
-			queryFilter.setConditionEnum(ConditionEnum.OR);
-			filters.add(queryFilter);
+		}
+		return this;
+	}
+
+	public CustomQuery<T> subAnd(QueryFilter... queryFilters) {
+		for (QueryFilter queryFilter : queryFilters) {
+			if (!QueryUtils.isNull(queryFilter.getValue())) {
+				queryFilter.setSubQueryNumber(subQueryNumber);
+				queryFilter.setConditionEnum(ConditionEnum.AND);
+				filters.add(queryFilter);
+				subQueryNumber = subQueryNumber + 1;
+			}
+		}
+		return this;
+	}
+
+	public CustomQuery<T> subOr(QueryFilter... queryFilters) {
+		for (QueryFilter queryFilter : queryFilters) {
+			if (!QueryUtils.isNull(queryFilter.getValue())) {
+				queryFilter.setSubQueryNumber(subQueryNumber);
+				queryFilter.setConditionEnum(ConditionEnum.OR);
+				filters.add(queryFilter);
+				subQueryNumber = subQueryNumber + 1;
+			}
 		}
 		return this;
 	}
@@ -77,12 +101,12 @@ public class CustomQuery<T> implements Specification<T> {
 		});
 	}
 
-	private Path buildPath(String paramsName, Root<T> root) {
+	private Path<T> buildPath(String paramsName, Root<T> root) {
 		String[] params = paramsName.split("\\.");
 		return build(params, 1, root.get(params[0]));
 	}
 
-	private Path build(String[] params, int i, Path path) {
+	private Path<T> build(String[] params, int i, Path<T> path) {
 		return params.length > i ? build(params, i + 1, path.get(params[i])) : path;
 	}
 

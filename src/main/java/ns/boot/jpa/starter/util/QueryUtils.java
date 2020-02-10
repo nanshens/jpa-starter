@@ -28,6 +28,10 @@ public class QueryUtils {
         }
     }
 
+    public static boolean isNull(String str) {
+        return "".equals(str) || "%".equals(str) || "%%".equals(str);
+    }
+
     public static boolean isNull(Object o) {
         if (o == null) {
             return true;
