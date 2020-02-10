@@ -4,7 +4,6 @@ import lombok.SneakyThrows;
 import ns.boot.jpa.starter.entity.QueryFilter;
 import ns.boot.jpa.starter.entity.QueryJoin;
 import ns.boot.jpa.starter.entity.QueryOrder;
-import ns.boot.jpa.starter.enums.ConditionEnum;
 import ns.boot.jpa.starter.util.QueryUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -43,8 +42,8 @@ public class CustomQueryTemp<T> implements Specification<T> {
 			if (Objects.isNull(queryFilter.getValue())) {
 				continue;
 			}
-			queryFilter.setChildQuery(false);
-			queryFilter.setConditionEnum(ConditionEnum.AND);
+//			queryFilter.setChildQuery(false);
+			queryFilter.setConditionEnum(Predicate.BooleanOperator.AND);
 			whereFilters.add(queryFilter);
 		}
 
@@ -57,8 +56,8 @@ public class CustomQueryTemp<T> implements Specification<T> {
 			if (Objects.isNull(queryFilter.getValue())) {
 				continue;
 			}
-			queryFilter.setChildQuery(false);
-			queryFilter.setConditionEnum(ConditionEnum.OR);
+//			queryFilter.setChildQuery(false);
+			queryFilter.setConditionEnum(Predicate.BooleanOperator.OR);
 			whereFilters.add(queryFilter);
 		}
 		orFilters.addAll(Arrays.asList(queryFilters));
@@ -67,8 +66,8 @@ public class CustomQueryTemp<T> implements Specification<T> {
 
 	public CustomQueryTemp<T> childAnd(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
-			queryFilter.setChildQuery(true);
-			queryFilter.setConditionEnum(ConditionEnum.AND);
+//			queryFilter.setChildQuery(true);
+			queryFilter.setConditionEnum(Predicate.BooleanOperator.AND);
 			whereFilters.add(queryFilter);
 		}
 		return this;
@@ -76,8 +75,8 @@ public class CustomQueryTemp<T> implements Specification<T> {
 
 	public CustomQueryTemp<T> childOr(QueryFilter... queryFilters) {
 		for (QueryFilter queryFilter : queryFilters) {
-			queryFilter.setChildQuery(true);
-			queryFilter.setConditionEnum(ConditionEnum.OR);
+//			queryFilter.setChildQuery(true);
+			queryFilter.setConditionEnum(Predicate.BooleanOperator.OR);
 			whereFilters.add(queryFilter);
 		}
 		return this;
@@ -284,50 +283,50 @@ public class CustomQueryTemp<T> implements Specification<T> {
 	 * */
 	private Predicate buildPredicate(Root<T> root, CriteriaBuilder cb) {
 		Predicate predicate = null;
-		Predicate childPredicate = null;
-		ConditionEnum childConditionEnum = null;
-		for (int i = 0; i < whereFilters.size(); i++) {
-			QueryFilter qf = whereFilters.get(i);
-			if (i == 0) {
-				predicate = buildPredicate(qf, root, cb);
-			} else {
-				QueryFilter lastqf = whereFilters.get(i - 1);
-				if (qf.isChildQuery()) {
-					if (!lastqf.isChildQuery()) {
-						childConditionEnum = lastqf.getConditionEnum();
-						childPredicate = buildPredicate(qf, root, cb);
-					} else {
-						if (lastqf.getConditionEnum() == qf.getConditionEnum()) {
-							childPredicate = selectCondition(childPredicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
-						}else {
-//							childand -childor
-						}
-						if (i == whereFilters.size() - 1) {
-							predicate = selectCondition(predicate, childPredicate, cb, childConditionEnum);
-						}
-					}
-				}else{
-					if (lastqf.isChildQuery()) {
-						predicate = selectCondition(predicate, childPredicate, cb, childConditionEnum);
-						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
-						childPredicate = null;
-					}else {
-						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
-					}
-				}
-			}
-		}
+//		Predicate childPredicate = null;
+//		Predicate.BooleanOperator childConditionEnum = null;
+//		for (int i = 0; i < whereFilters.size(); i++) {
+//			QueryFilter qf = whereFilters.get(i);
+//			if (i == 0) {
+//				predicate = buildPredicate(qf, root, cb);
+//			} else {
+//				QueryFilter lastqf = whereFilters.get(i - 1);
+//				if (qf.isChildQuery()) {
+//					if (!lastqf.isChildQuery()) {
+//						childConditionEnum = lastqf.getConditionEnum();
+//						childPredicate = buildPredicate(qf, root, cb);
+//					} else {
+//						if (lastqf.getConditionEnum() == qf.getConditionEnum()) {
+//							childPredicate = selectCondition(childPredicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
+//						}else {
+////							childand -childor
+//						}
+//						if (i == whereFilters.size() - 1) {
+//							predicate = selectCondition(predicate, childPredicate, cb, childConditionEnum);
+//						}
+//					}
+//				}else{
+//					if (lastqf.isChildQuery()) {
+//						predicate = selectCondition(predicate, childPredicate, cb, childConditionEnum);
+//						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
+//						childPredicate = null;
+//					}else {
+//						predicate = selectCondition(predicate, buildPredicate(qf, root, cb), cb, qf.getConditionEnum());
+//					}
+//				}
+//			}
+//		}
 		return predicate;
 	}
 
-	public Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, ConditionEnum conditionEnum) {
-		return conditionEnum == ConditionEnum.AND ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
+	public Predicate selectCondition(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Predicate.BooleanOperator conditionEnum) {
+		return conditionEnum == Predicate.BooleanOperator.AND ? cb.and(basicPredicate, newPredicate) : cb.or(basicPredicate, newPredicate);
 	}
 
 	private Predicate chooseOrAnd(Predicate basicPredicate, Predicate newPredicate, CriteriaBuilder cb, Enum type) {
 		return basicPredicate == null ?
 				newPredicate :
-				type == ConditionEnum.AND ?
+				type == Predicate.BooleanOperator.AND ?
 						cb.and(basicPredicate, newPredicate) :
 						cb.or(basicPredicate, newPredicate);
 	}

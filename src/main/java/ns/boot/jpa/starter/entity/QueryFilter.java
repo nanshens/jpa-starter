@@ -2,10 +2,10 @@ package ns.boot.jpa.starter.entity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ns.boot.jpa.starter.enums.ConditionEnum;
 import ns.boot.jpa.starter.enums.MatchType;
 import ns.boot.jpa.starter.util.QueryUtils;
 
+import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,7 +24,7 @@ public  class QueryFilter {
     private Object value;
     private MatchType type;
     private int subQueryNumber;
-    private ConditionEnum conditionEnum;
+    private Predicate.BooleanOperator conditionEnum;
 
 //    public QueryFilter(String name, Object value) {
 //        this.name = name;
@@ -93,21 +93,12 @@ public  class QueryFilter {
         return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
 
-    public static QueryFilter in(String name, Object... valueList){
-        List values = new ArrayList();
-
-        if (valueList.length > 1) {
-            values.add(Arrays.asList(valueList));
-        } else if (valueList.length == 1) {
-            if (valueList[0] instanceof Collection){
-                values = (List) valueList[0];
-            } else if (valueList[0] instanceof Object[]) {
-                values.add(Arrays.asList(valueList[0]));
-            }else {
-                values.add(valueList[0]);
-            }
-        }
+    public static QueryFilter in(String name, Collection<Object> values){
         return new QueryFilter(name, values, MatchType.IN);
+    }
+
+    public static QueryFilter in(String name, Object[] values){
+        return new QueryFilter(name, Arrays.asList(values), MatchType.IN);
     }
 
     public static QueryFilter isNull(String name){
@@ -118,27 +109,10 @@ public  class QueryFilter {
         return new QueryFilter(name, null, MatchType.IS_NOT_NULL);
     }
 
-    public static <T extends Comparable> QueryFilter between(String name, T minValue, T maxValue){
-        List<Comparable> valueList = new ArrayList<>();
+    public static <T extends Comparable<? super T>> QueryFilter between(String name, T minValue, T maxValue){
+        List<Comparable<? super T>> valueList = new ArrayList<>();
         valueList.add(minValue);
         valueList.add(maxValue);
         return new QueryFilter(name, valueList, MatchType.BETWEEN);
-    }
-
-    public static <T extends Comparable> QueryFilter between(String name, Object... valueList){
-        List values = new ArrayList();
-
-        if (valueList.length > 1) {
-            values.add(Arrays.asList(valueList));
-        } else if (valueList.length == 1) {
-            if (valueList[0] instanceof Collection){
-                values = (List) valueList[0];
-            } else if (valueList[0] instanceof Object[]) {
-                values.add(Arrays.asList(valueList[0]));
-            }else {
-                values.add(valueList[0]);
-            }
-        }
-        return new QueryFilter(name, values, MatchType.BETWEEN);
     }
 }
