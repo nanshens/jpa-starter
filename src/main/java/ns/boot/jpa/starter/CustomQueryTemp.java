@@ -23,8 +23,7 @@ import java.util.Objects;
 
 
 /**
- * @author acer
- * @date 2018/7/30
+ * @author ns
  */
 public class CustomQueryTemp<T> implements Specification<T> {
 
@@ -232,8 +231,8 @@ public class CustomQueryTemp<T> implements Specification<T> {
 		queryInfo = QueryUtils.objectMap(object);
 	}
 
-	public CustomQueryTemp() {
-	}
+//	public CustomQueryTemp() {
+//	}
 
 //	@SneakyThrows
 //	private static void initParseMap() {
