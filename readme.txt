@@ -100,7 +100,7 @@ jpaquery
 				QueryFilter.eq("address.id", "1"));
 
 //		3.select * from customer
-//		where code > '3' or (name='2' and address_id ='1');
+//		where code > '3' or (name='2' and address_id ='1') or code > '3';
 
 		JpaQuery query3 = new JpaQuery<Customer>();
 		query3.or(QueryFilter.ge("code", "3")
@@ -109,22 +109,26 @@ jpaquery
 				.or(QueryFilter.ge("code", "3"));
 
 //		4.select * from customer
-//		where code < '4' and (name='2' or address_id ='1');
+//		where code < '4' and (name='2' or address_id ='1') and code < '4';
 
 		JpaQuery query4 = new JpaQuery<Customer>();
 		query4.and(QueryFilter.le("code", "4"))
 				.childOr(QueryFilter.eq("name", "2"),
-						QueryFilter.eq("address.id", "1"));
+						QueryFilter.eq("address.id", "1"))
+				.and(QueryFilter.le("code", "4"))
 
 //		5.select * from customer
-//		where code > '3' or (name='2' and address_id ='1') or (f1 = 'v' and f2 = 'v') or f3 ='v';
+//		where (f1 = 'v' and f2 = 'v') or (name='2' and address_id ='1') or (f1 = 'v' and f2 = 'v') or f3 ='v';
 		JpaQuery query5 = new JpaQuery<Customer>();
-		query4.or(QueryFilter.gt("code", "3"))
-				.childAnd(QueryFilter.eq("name", "2"),
+		query4.and(QueryFilter.le("code", "4"),
+		        QueryFilter.le("code", "4"))
+		        .or()
+				.and(QueryFilter.eq("name", "2"),
 						QueryFilter.eq("address.id", "1"))
-				.or(QueryFilter.gt("code", "3"))
-				.childAnd(QueryFilter.eq("name", "2"),
-						QueryFilter.eq("address.id", "1"));
+				.or()
+				.and(QueryFilter.eq("name", "2"),
+						QueryFilter.eq("address.id", "1"))
+				.or(QueryFilter.eq("name", "2");
 
 
 //		6.select * from customer
@@ -134,6 +138,7 @@ jpaquery
 		query4.or(QueryFilter.gt("code", "3"))
 				.childAnd(QueryFilter.eq("name", "2"),
 						QueryFilter.eq("address.id", "1"))
+				.and()
 				.childOr(QueryFilter.eq("name", "2"),
 						QueryFilter.eq("address.id", "1"));
 
