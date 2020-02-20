@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.nanshens</groupId>
     <artifactId>jpa-starter</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <name>jpa-starter</name>
     <description>Demo project for Spring Boot</description>
     <url>https://github.com/nanshens/jpa-starter</url>

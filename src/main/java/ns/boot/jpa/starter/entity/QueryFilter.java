@@ -13,12 +13,11 @@ import java.util.List;
 
 
 /**
- * @author acer
- * @date 2018/7/30
+ * @author ns
  */
 @Data
 @NoArgsConstructor
-public  class QueryFilter {
+public class QueryFilter {
 
     private String name;
     private Object value;
