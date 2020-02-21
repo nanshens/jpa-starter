@@ -163,8 +163,10 @@ public class CustomQuery<T> implements Specification<T> {
 			if (filter.getSubQueryNumber() > 0) {
 				subPredicate.getExpressions().add(selectPredicate(filter, buildPath(filter.getName(), root), cb));
 			} else {
-				subPredicates.add(subPredicate);
-				subPredicate = cb.disjunction();
+				if (subPredicate.getExpressions().size() > 0){
+					subPredicates.add(subPredicate);
+					subPredicate = cb.disjunction();
+				}
 				if (filter.getName() != null && filter.getValue() != null) {
 					subPredicates.add(selectPredicate(filter, buildPath(filter.getName(), root), cb));
 				}
