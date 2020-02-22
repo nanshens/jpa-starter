@@ -30,7 +30,7 @@ public class QueryFilter {
 //        this.value = value;
 //    }
 
-    public QueryFilter(String name, Object value, MatchType type) {
+    private QueryFilter(String name, Object value, MatchType type) {
         this.name = name;
         this.value = value;
         this.type = type;
@@ -65,30 +65,30 @@ public class QueryFilter {
     }
 
     public static QueryFilter startLike(String name, String value){
-        QueryUtils.format(value);
+        value = QueryUtils.format(value);
         return new QueryFilter(name, "".equals(value) ? "" : "%" + value, MatchType.LIKE);
     }
 
     public static QueryFilter startLikeIgnoreCase(String name, String value){
-        QueryUtils.format(value);
+        value = QueryUtils.format(value);
         return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase(), MatchType.LIKE_IG_CASE);
     }
     public static QueryFilter endLike(String name, String value){
-        QueryUtils.format(value);
+        value = QueryUtils.format(value);
         return new QueryFilter(name, "".equals(value) ? "" : value + "%", MatchType.LIKE);
     }
 
     public static QueryFilter endLikeIgnoreCase(String name, String value){
-        QueryUtils.format(value);
+        value = QueryUtils.format(value);
         return new QueryFilter(name, "".equals(value) ? "" : value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
     public static QueryFilter allLike(String name, String value){
-        QueryUtils.format(value);
+        value = QueryUtils.format(value);
         return new QueryFilter(name, "".equals(value) ? "" : "%" + value + "%", MatchType.LIKE);
     }
 
     public static QueryFilter allLikeIgnoreCase(String name, String value){
-        QueryUtils.format(value);
+        value = QueryUtils.format(value);
         return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
 
@@ -109,9 +109,13 @@ public class QueryFilter {
     }
 
     public static <T extends Comparable<? super T>> QueryFilter between(String name, T minValue, T maxValue){
-        List<Comparable<? super T>> valueList = new ArrayList<>();
+        List<T> valueList = new ArrayList<>(2);
         valueList.add(minValue);
         valueList.add(maxValue);
+        return new QueryFilter(name, valueList, MatchType.BETWEEN);
+    }
+
+    public static <T extends Comparable<? super T>> QueryFilter between(String name,  List<T> valueList){
         return new QueryFilter(name, valueList, MatchType.BETWEEN);
     }
 }

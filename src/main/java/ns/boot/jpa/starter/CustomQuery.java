@@ -111,6 +111,20 @@ public class CustomQuery<T> implements Specification<T> {
 		return this;
 	}
 
+	public CustomQuery<T> deleteFiltersIn(String... names) {
+		for (String name : names) {
+			filters.removeIf(af -> af.getName().equals(name));
+		}
+		return this;
+	}
+
+	public CustomQuery<T> deleteFiltersEx(String... names) {
+		for (String name : names) {
+			filters.removeIf(af -> !af.getName().equals(name));
+		}
+		return this;
+	}
+
 	public CustomQuery<T> order(QueryOrder... queryOrders) {
 		orders.addAll(Arrays.asList(queryOrders));
 		return this;

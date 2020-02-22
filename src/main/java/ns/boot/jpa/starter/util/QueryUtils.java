@@ -22,10 +22,11 @@ import java.util.Stack;
 public class QueryUtils {
     public enum StringEnums{upper,lower}
 
-    public static void format(String value) {
+    public static String format(String value) {
         if (value == null || "null".equals(value)) {
             value = "";
         }
+        return value;
     }
 
     public static boolean isNull(String str) {
@@ -37,7 +38,10 @@ public class QueryUtils {
             return true;
         }
         if (o instanceof String) {
-            return "".equals(o.toString()) || "null".equals(o.toString());
+            return "".equals(o) || "%".equals(o) || "%%".equals(o);
+        }
+        if (o instanceof List) {
+            return ((List) o).size() == 0;
         }
         return false;
     }
