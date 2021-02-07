@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -92,7 +93,7 @@ public class QueryFilter {
         return new QueryFilter(name, "".equals(value) ? "" : "%" + value.toLowerCase() + "%", MatchType.LIKE_IG_CASE);
     }
 
-    public static QueryFilter in(String name, Collection<Object> values){
+    public static QueryFilter in(String name, Collection<?> values){
         return new QueryFilter(name, values, MatchType.IN);
     }
 

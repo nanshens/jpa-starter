@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,8 @@ public class QueryUtils {
         if (o instanceof String) {
             return "".equals(o) || "%".equals(o) || "%%".equals(o);
         }
-        if (o instanceof List) {
-            return ((List) o).size() == 0;
+        if (o instanceof Collection) {
+            return ((Collection) o).size() == 0;
         }
         return false;
     }
